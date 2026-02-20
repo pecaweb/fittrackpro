@@ -730,9 +730,14 @@ textarea.form-control { resize: vertical; min-height: 80px; }
       </button>
     </div>
 
-    <!-- ===================== ADD WORKOUT ===================== -->
+    <!-- ===================== ADD / EDIT WORKOUT ===================== -->
     <div class="view" id="view-add">
-      <div class="section-title"><div class="dot"></div>Nuevo Entrenamiento</div>
+      <div class="section-title" id="form-section-title"><div class="dot"></div>Nuevo Entrenamiento</div>
+      <!-- Edit mode banner -->
+      <div id="edit-banner" style="display:none;background:rgba(255,107,53,0.1);border:1px solid rgba(255,107,53,0.3);border-radius:var(--r2);padding:10px 14px;margin-bottom:14px;display:none;align-items:center;justify-content:space-between;gap:10px;">
+        <div style="font-size:0.83rem;color:var(--accent);font-weight:600;">✏️ Editando entrenamiento — los cambios sobreescribirán los datos originales</div>
+        <button class="btn btn-secondary btn-sm" onclick="cancelEdit()">✕ Cancelar</button>
+      </div>
       <div class="card card-sm">
         <div class="form-row">
           <div class="form-group" style="margin:0"><label class="form-label">Fecha</label><input type="date" class="form-control" id="f-date"></div>
@@ -763,7 +768,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
           <textarea class="form-control" id="f-observations" placeholder="Cómo te has sentido, fatiga, condiciones, notas..."></textarea>
         </div>
         <div style="display:flex;gap:10px;">
-          <button class="btn btn-primary" style="flex:1;" onclick="saveWorkout()">💾 Guardar</button>
+          <button class="btn btn-primary" style="flex:1;" onclick="saveWorkout()" id="save-btn">💾 Guardar</button>
           <button class="btn btn-secondary" onclick="resetForm()">✕ Limpiar</button>
         </div>
       </div>
@@ -1042,6 +1047,7 @@ let currentWeekOffset = 0;
 let currentChartPeriod = '4w';
 let currentDistActivity = 'cycling';
 let currentWeightExercise = '';
+let editingId = null;   // null = nuevo, número = editando
 let deferredPrompt = null;
 let driveAutoSync = false;
 let charts = {};
@@ -1115,6 +1121,13 @@ function dbBulkAdd(items) {
     const tx = db.transaction('workouts','readwrite');
     const s = tx.objectStore('workouts');
     items.forEach(item => s.put(item));
+    tx.oncomplete = res; tx.onerror = rej;
+  });
+}
+function dbUpdate(w) {
+  return new Promise((res,rej) => {
+    const tx = db.transaction('workouts','readwrite');
+    tx.objectStore('workouts').put(w);   // put = upsert por keyPath id
     tx.oncomplete = res; tx.onerror = rej;
   });
 }
@@ -1302,7 +1315,7 @@ async function saveWorkout() {
   else if (currentActivity==='hiking') data={route:document.getElementById('h-route')?.value,distance:document.getElementById('h-distance')?.value,duration:document.getElementById('h-duration')?.value,elevation:document.getElementById('h-elevation')?.value,altMax:document.getElementById('h-alt-max')?.value,difficulty:document.getElementById('h-difficulty')?.value};
 
   const workout = {
-    id: Date.now(), activity: currentActivity,
+    id: editingId || Date.now(), activity: currentActivity,
     date: date || new Date().toISOString().split('T')[0],
     time: time || new Date().toTimeString().slice(0,5),
     hrAvg: document.getElementById('f-hr-avg').value ? parseInt(document.getElementById('f-hr-avg').value) : null,
@@ -1311,8 +1324,13 @@ async function saveWorkout() {
     data
   };
 
-  await dbAdd(workout);
-  toast('✅ Entrenamiento guardado');
+  if (editingId) {
+    await dbUpdate(workout);
+    toast('✅ Entrenamiento actualizado');
+  } else {
+    await dbAdd(workout);
+    toast('✅ Entrenamiento guardado');
+  }
   resetForm();
   if (driveAutoSync && isDriveConnected()) {
     toast('☁️ Sincronizando con Drive...');
@@ -1322,16 +1340,121 @@ async function saveWorkout() {
 }
 
 function resetForm() {
+  editingId = null;
   currentActivity=null; gymExercises=[]; cyclingSegments=[];
   document.querySelectorAll('.activity-opt').forEach(o=>o.classList.remove('selected'));
   document.getElementById('activity-form-area').innerHTML='';
   document.getElementById('common-fields').style.display='none';
+  // Reset edit-mode UI
+  const banner = document.getElementById('edit-banner');
+  if (banner) banner.style.display = 'none';
+  const title = document.getElementById('form-section-title');
+  if (title) title.innerHTML = '<div class="dot"></div>Nuevo Entrenamiento';
+  const saveBtn = document.getElementById('save-btn');
+  if (saveBtn) saveBtn.innerHTML = '💾 Guardar';
   ['f-date','f-time','f-hr-avg','f-hr-max','f-observations'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.value='';
   });
   const now=new Date();
   document.getElementById('f-date').value=now.toISOString().split('T')[0];
   document.getElementById('f-time').value=now.toTimeString().slice(0,5);
+}
+function cancelEdit() { resetForm(); showView('history'); }
+
+// ============================================================
+// EDIT WORKOUT — carga un entrenamiento existente en el formulario
+// ============================================================
+async function editWorkout(id) {
+  const all = await dbAll();
+  const w = all.find(x => x.id === id);
+  if (!w) { toast('Entrenamiento no encontrado'); return; }
+
+  resetForm();           // limpia estado previo
+  editingId = w.id;      // activa modo edición
+
+  // Navegar al formulario
+  showView('add');
+
+  // Título + banner
+  const title = document.getElementById('form-section-title');
+  if (title) title.innerHTML = '<div class="dot" style="background:var(--accent)"></div>Editando Entrenamiento';
+  const banner = document.getElementById('edit-banner');
+  if (banner) { banner.style.display = 'flex'; }
+  const saveBtn = document.getElementById('save-btn');
+  if (saveBtn) saveBtn.innerHTML = '✅ Actualizar';
+
+  // Campos comunes de fecha / hora
+  document.getElementById('f-date').value = w.date || '';
+  document.getElementById('f-time').value = w.time || '';
+  if (w.hrAvg) document.getElementById('f-hr-avg').value = w.hrAvg;
+  if (w.hrMax) document.getElementById('f-hr-max').value = w.hrMax;
+  document.getElementById('f-observations').value = w.observations || '';
+
+  // Seleccionar actividad (resalta el botón)
+  currentActivity = w.activity;
+  document.querySelectorAll('.activity-opt').forEach(o =>
+    o.classList.toggle('selected', o.dataset.act === w.activity)
+  );
+
+  // Renderizar formulario específico
+  renderActivityForm(w.activity);
+  document.getElementById('common-fields').style.display = 'block';
+
+  // Necesitamos un tick para que el DOM esté listo antes de rellenar
+  await new Promise(r => setTimeout(r, 30));
+
+  const d = w.data || {};
+
+  if (w.activity === 'cycling') {
+    if (d.distance)  document.getElementById('c-distance').value  = d.distance;
+    if (d.duration)  document.getElementById('c-duration').value  = d.duration;
+    if (d.speedAvg)  document.getElementById('c-speed-avg').value = d.speedAvg;
+    if (d.speedMax)  document.getElementById('c-speed-max').value = d.speedMax;
+    if (d.elevation) document.getElementById('c-elevation').value = d.elevation;
+    if (d.power)     document.getElementById('c-power').value     = d.power;
+    // Restaurar segmentos
+    if (d.segments?.length) {
+      cyclingSegments = JSON.parse(JSON.stringify(d.segments));
+      renderCyclingSegments();
+    }
+  }
+
+  else if (w.activity === 'gym') {
+    if (d.exercises?.length) {
+      gymExercises = JSON.parse(JSON.stringify(d.exercises));
+      renderGymExercises();
+    }
+  }
+
+  else if (w.activity === 'running') {
+    if (d.type)      { const el=document.getElementById('r-type');     if(el) el.value=d.type; }
+    if (d.surface)   { const el=document.getElementById('r-surface');  if(el) el.value=d.surface; }
+    if (d.distance)  { const el=document.getElementById('r-distance'); if(el) el.value=d.distance; }
+    if (d.duration)  { const el=document.getElementById('r-duration'); if(el) el.value=d.duration; }
+    if (d.pace)      { const el=document.getElementById('r-pace');     if(el) el.value=d.pace; }
+    if (d.elevation) { const el=document.getElementById('r-elevation');if(el) el.value=d.elevation; }
+  }
+
+  else if (w.activity === 'rowing') {
+    if (d.type)     { const el=document.getElementById('row-type');     if(el) el.value=d.type; }
+    if (d.distance) { const el=document.getElementById('row-distance'); if(el) el.value=d.distance; }
+    if (d.duration) { const el=document.getElementById('row-duration'); if(el) el.value=d.duration; }
+    if (d.pace)     { const el=document.getElementById('row-pace');     if(el) el.value=d.pace; }
+    if (d.spm)      { const el=document.getElementById('row-spm');      if(el) el.value=d.spm; }
+    if (d.power)    { const el=document.getElementById('row-power');    if(el) el.value=d.power; }
+  }
+
+  else if (w.activity === 'hiking') {
+    if (d.route)      { const el=document.getElementById('h-route');      if(el) el.value=d.route; }
+    if (d.distance)   { const el=document.getElementById('h-distance');   if(el) el.value=d.distance; }
+    if (d.duration)   { const el=document.getElementById('h-duration');   if(el) el.value=d.duration; }
+    if (d.elevation)  { const el=document.getElementById('h-elevation');  if(el) el.value=d.elevation; }
+    if (d.altMax)     { const el=document.getElementById('h-alt-max');    if(el) el.value=d.altMax; }
+    if (d.difficulty) { const el=document.getElementById('h-difficulty'); if(el) el.value=d.difficulty; }
+  }
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  toast('✏️ Editando — pulsa Actualizar para guardar los cambios');
 }
 
 // ============================================================
@@ -1437,7 +1560,10 @@ function workoutCardHTML(w) {
   return `<div class="workout-card" onclick="openModal(${w.id})">
   <div class="wc-top"><div><div class="wc-date">${w.time||''}</div><div class="wc-title">${actEmojis[w.activity]} ${actLabels[w.activity]}</div></div>
   <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;"><span class="badge badge-${w.activity}">${actLabels[w.activity]}</span>
-  <button onclick="event.stopPropagation();confirmDelete(${w.id})" class="btn btn-danger btn-sm" style="padding:3px 9px;font-size:0.7rem;">🗑 Borrar</button></div></div>
+  <div style="display:flex;gap:5px;">
+  <button onclick="event.stopPropagation();editWorkout(${w.id})" class="btn btn-secondary btn-sm" style="padding:3px 9px;font-size:0.7rem;">✏️ Editar</button>
+  <button onclick="event.stopPropagation();confirmDelete(${w.id})" class="btn btn-danger btn-sm" style="padding:3px 9px;font-size:0.7rem;">🗑 Borrar</button>
+  </div></div></div>
   ${metas?`<div class="wc-meta">${metas}</div>`:''}
   ${w.observations?`<div style="margin-top:7px;font-size:0.76rem;color:var(--text2);font-style:italic;">"${w.observations.slice(0,90)}${w.observations.length>90?'...':''}"</div>`:''}
   </div>`;
@@ -1485,7 +1611,9 @@ async function openModal(id) {
   if(w.observations){c+=`<div class="card card-sm" style="border-left:3px solid var(--accent2);margin-bottom:10px;">
   <div style="font-size:0.72rem;color:var(--accent2);font-weight:700;margin-bottom:5px;">📝 OBSERVACIONES</div>
   <div style="font-size:0.85rem;color:var(--text2);line-height:1.6;">${w.observations}</div></div>`;}
-  c+=`<div style="display:flex;gap:10px;"><button class="btn btn-danger btn-sm" style="flex:1;" onclick="confirmDelete(${w.id});closeModalDirect()">🗑 Eliminar</button>
+  c+=`<div style="display:flex;gap:10px;">
+  <button class="btn btn-secondary btn-sm" style="flex:1;" onclick="editWorkout(${w.id});closeModalDirect()">✏️ Editar</button>
+  <button class="btn btn-danger btn-sm" style="flex:1;" onclick="confirmDelete(${w.id});closeModalDirect()">🗑 Eliminar</button>
   <button class="btn btn-secondary btn-sm" style="flex:1;" onclick="closeModalDirect()">Cerrar</button></div>`;
 
   document.getElementById('modal-content').innerHTML=c;
@@ -1975,6 +2103,10 @@ async function driveConnect(){
       callback:(response)=>{
         if(response.error){driveLog('Error OAuth: '+response.error,'err');updateDriveUI('error');toast('❌ Error de autorización: '+response.error);return;}
         driveToken=response.access_token;
+        // Persist token + expiry (tokens duran ~1h)
+        const expiry = Date.now() + (response.expires_in ? response.expires_in*1000 : 3500*1000);
+        localStorage.setItem('fittrack-drive-token', driveToken);
+        localStorage.setItem('fittrack-drive-token-expiry', expiry);
         driveLog('✓ Autorización correcta. Drive conectado.','ok');
         updateDriveUI('connected');
         toast('✅ Google Drive conectado');
@@ -1991,6 +2123,8 @@ async function driveConnect(){
 function driveDisconnect(){
   if(window.google?.accounts?.oauth2&&driveToken){google.accounts.oauth2.revoke(driveToken,()=>{});}
   driveToken=null; driveFileId=null;
+  localStorage.removeItem('fittrack-drive-token');
+  localStorage.removeItem('fittrack-drive-token-expiry');
   driveLog('Sesión de Drive cerrada.','info');
   updateDriveUI('disconnected');
   toast('Drive desconectado');
@@ -2115,8 +2249,51 @@ window.addEventListener('DOMContentLoaded',async()=>{
   driveClientId=localStorage.getItem('fittrack-drive-clientid')||'';
   driveFileName=localStorage.getItem('fittrack-drive-filename')||'fittrack_data.json';
   driveAutoSync=localStorage.getItem('fittrack-autosync')==='true';
-  if(!driveClientId) updateDriveUI('config');
-  else updateDriveUI('disconnected');
+
+  // Intentar restaurar token guardado si no ha expirado
+  const savedToken  = localStorage.getItem('fittrack-drive-token');
+  const savedExpiry = parseInt(localStorage.getItem('fittrack-drive-token-expiry')||'0');
+  if (savedToken && savedExpiry > Date.now() + 60000) {
+    // Token aún válido (queda más de 1 minuto)
+    driveToken = savedToken;
+    driveLog('✓ Sesión Drive restaurada automáticamente.','ok');
+    updateDriveUI('connected');
+  } else if (savedToken) {
+    // Token expirado — limpiar y ofrecer reconexión silenciosa
+    localStorage.removeItem('fittrack-drive-token');
+    localStorage.removeItem('fittrack-drive-token-expiry');
+    if (driveClientId) {
+      driveLog('Token expirado. Reconectando silenciosamente...','info');
+      updateDriveUI('syncing');
+      // Pequeño delay para que cargue el script de Google
+      setTimeout(async () => {
+        try {
+          await loadGapi();
+          const tc = google.accounts.oauth2.initTokenClient({
+            client_id: driveClientId,
+            scope:'https://www.googleapis.com/auth/drive.file',
+            prompt:'',   // sin popup si hay sesión activa
+            callback:(r)=>{
+              if(r.error){ updateDriveUI('disconnected'); driveLog('Reconexión silenciosa fallida. Pulsa Conectar.','info'); return; }
+              driveToken=r.access_token;
+              const expiry=Date.now()+(r.expires_in?r.expires_in*1000:3500*1000);
+              localStorage.setItem('fittrack-drive-token',driveToken);
+              localStorage.setItem('fittrack-drive-token-expiry',expiry);
+              driveLog('✓ Reconexión automática correcta.','ok');
+              updateDriveUI('connected');
+            }
+          });
+          tc.requestAccessToken({prompt:''});
+        } catch(e) { updateDriveUI('disconnected'); }
+      }, 1500);
+    } else {
+      updateDriveUI('config');
+    }
+  } else if (!driveClientId) {
+    updateDriveUI('config');
+  } else {
+    updateDriveUI('disconnected');
+  }
 
   // Auto-sync toggle UI
   const toggle=document.getElementById('auto-sync-toggle');
