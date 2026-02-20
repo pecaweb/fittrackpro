@@ -1,0 +1,2133 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#0d0d0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>FitTrack Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+/* ===========================
+   THEME VARIABLES
+   =========================== */
+[data-theme="dark"] {
+  --bg: #0d0d0f;
+  --bg2: #141418;
+  --bg3: #1c1c22;
+  --bg4: #252530;
+  --border: #2a2a35;
+  --text: #f0f0f5;
+  --text2: #9090a8;
+  --text3: #55556a;
+  --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  --chart-grid: rgba(255,255,255,0.06);
+  --modal-bg: rgba(0,0,0,0.78);
+}
+[data-theme="light"] {
+  --bg: #f2f2f7;
+  --bg2: #ffffff;
+  --bg3: #f8f8fc;
+  --bg4: #ebebf0;
+  --border: #d8d8e0;
+  --text: #0d0d0f;
+  --text2: #5a5a72;
+  --text3: #9090a8;
+  --shadow: 0 4px 24px rgba(0,0,0,0.1);
+  --chart-grid: rgba(0,0,0,0.07);
+  --modal-bg: rgba(0,0,0,0.5);
+}
+:root {
+  --accent: #ff6b35;
+  --accent2: #00b8d9;
+  --accent3: #a855f7;
+  --green: #22c55e;
+  --yellow: #fbbf24;
+  --red: #ef4444;
+  --r: 14px;
+  --r2: 10px;
+  --transition-theme: background 0.3s, color 0.3s, border-color 0.3s;
+}
+
+/* ===========================
+   BASE
+   =========================== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+  transition: var(--transition-theme);
+}
+h1,h2,h3 { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.04em; }
+
+#app { display: flex; flex-direction: column; min-height: 100vh; }
+#main { flex: 1; padding: 16px; padding-bottom: 90px; max-width: 800px; margin: 0 auto; width: 100%; }
+
+/* ===========================
+   TOP BAR
+   =========================== */
+#topbar {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  transition: var(--transition-theme);
+}
+#topbar .logo { font-family: 'Bebas Neue'; font-size: 1.4rem; color: var(--accent); letter-spacing: 0.1em; }
+#topbar .logo span { color: var(--accent2); }
+.topbar-right { display: flex; align-items: center; gap: 8px; }
+.date-chip {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.74rem;
+  color: var(--text2);
+}
+.theme-toggle {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  transition: all 0.2s;
+  color: var(--text);
+}
+.theme-toggle:hover { border-color: var(--accent); }
+
+/* Drive status pill */
+.drive-status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text3);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.drive-status:hover { border-color: var(--accent2); }
+.drive-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text3); }
+.drive-dot.connected { background: var(--green); animation: pulse 2s infinite; }
+.drive-dot.syncing { background: var(--yellow); animation: pulse 0.7s infinite; }
+@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+
+/* ===========================
+   BOTTOM NAV
+   =========================== */
+#bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  display: flex;
+  z-index: 100;
+  padding-bottom: env(safe-area-inset-bottom);
+  transition: var(--transition-theme);
+}
+.nav-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 9px 4px;
+  background: none;
+  border: none;
+  color: var(--text3);
+  cursor: pointer;
+  font-family: 'DM Sans';
+  font-size: 0.6rem;
+  font-weight: 600;
+  transition: color 0.2s;
+}
+.nav-btn.active { color: var(--accent); }
+.nav-btn svg { width: 20px; height: 20px; }
+
+/* ===========================
+   VIEWS
+   =========================== */
+.view { display: none; animation: fadeIn 0.2s ease; }
+.view.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* ===========================
+   CARDS
+   =========================== */
+.card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 18px;
+  margin-bottom: 14px;
+  transition: var(--transition-theme);
+}
+.card-sm { padding: 14px; }
+
+/* ===========================
+   BUTTONS
+   =========================== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 20px;
+  border-radius: var(--r2);
+  border: none;
+  font-family: 'DM Sans';
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.btn-primary { background: var(--accent); color: white; }
+.btn-primary:hover { background: #e55a27; transform: translateY(-1px); }
+.btn-secondary { background: var(--bg4); color: var(--text); border: 1px solid var(--border); }
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+.btn-drive { background: #e8f0fe; color: #1a73e8; border: 1px solid #aecbfa; }
+[data-theme="dark"] .btn-drive { background: #0d2044; color: #8ab4f8; border: 1px solid #1a3a6e; }
+.btn-drive:hover { transform: translateY(-1px); }
+.btn-danger { background: #2a1010; color: var(--red); border: 1px solid #3d1515; }
+.btn-danger:hover { background: #3d1515; }
+[data-theme="light"] .btn-danger { background: #fef2f2; color: var(--red); border-color: #fecaca; }
+.btn-sm { padding: 7px 13px; font-size: 0.78rem; }
+.btn-full { width: 100%; justify-content: center; }
+
+/* ===========================
+   FORMS
+   =========================== */
+.form-group { margin-bottom: 13px; }
+.form-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text2);
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+.form-control {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  color: var(--text);
+  font-family: 'DM Sans';
+  font-size: 0.92rem;
+  padding: 10px 13px;
+  transition: border-color 0.2s, background 0.3s;
+  -webkit-appearance: none;
+}
+.form-control:focus { outline: none; border-color: var(--accent); }
+.form-control option { background: var(--bg3); color: var(--text); }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+textarea.form-control { resize: vertical; min-height: 80px; }
+
+/* ===========================
+   SECTION TITLES
+   =========================== */
+.section-title {
+  font-family: 'Bebas Neue';
+  font-size: 1.25rem;
+  color: var(--text);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-title .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+
+/* ===========================
+   BADGES
+   =========================== */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+[data-theme="dark"] .badge-cycling { background: #0a2a3d; color: var(--accent2); border: 1px solid #0d3a55; }
+[data-theme="dark"] .badge-gym { background: #2a0a2a; color: var(--accent3); border: 1px solid #3d0d3d; }
+[data-theme="dark"] .badge-running { background: #2a1a0a; color: var(--yellow); border: 1px solid #3d260d; }
+[data-theme="dark"] .badge-rowing { background: #0a2a1a; color: var(--green); border: 1px solid #0d3d26; }
+[data-theme="dark"] .badge-hiking { background: #1a2a0a; color: #84cc16; border: 1px solid #263d0d; }
+[data-theme="light"] .badge-cycling { background: #e0f4ff; color: #0077a8; border: 1px solid #bde5f8; }
+[data-theme="light"] .badge-gym { background: #f3e8ff; color: #7e22ce; border: 1px solid #d8b4fe; }
+[data-theme="light"] .badge-running { background: #fef9e7; color: #a16207; border: 1px solid #fde68a; }
+[data-theme="light"] .badge-rowing { background: #e8faf0; color: #15803d; border: 1px solid #a7f3d0; }
+[data-theme="light"] .badge-hiking { background: #f0fdf4; color: #4d7c0f; border: 1px solid #bbf7d0; }
+
+/* ===========================
+   DASHBOARD STATS
+   =========================== */
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+.stat-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  padding: 15px;
+  position: relative;
+  overflow: hidden;
+  transition: var(--transition-theme);
+}
+.stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
+.stat-card.orange::before { background: var(--accent); }
+.stat-card.cyan::before { background: var(--accent2); }
+.stat-card.purple::before { background: var(--accent3); }
+.stat-card.green::before { background: var(--green); }
+.stat-num { font-family: 'Bebas Neue'; font-size: 1.9rem; line-height: 1; color: var(--text); }
+.stat-label { font-size: 0.72rem; color: var(--text2); margin-top: 3px; }
+.stat-icon { position: absolute; right: 12px; top: 12px; font-size: 1.3rem; opacity: 0.2; }
+
+/* ===========================
+   WORKOUT CARDS
+   =========================== */
+.workout-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 15px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.15s, background 0.3s;
+}
+.workout-card:hover { border-color: var(--accent); transform: translateX(2px); }
+.workout-card .wc-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.workout-card .wc-date { font-size: 0.75rem; color: var(--text2); }
+.workout-card .wc-title { font-family: 'Bebas Neue'; font-size: 1.05rem; margin-top: 2px; }
+.workout-card .wc-meta { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 8px; }
+.meta-chip {
+  background: var(--bg4);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 0.74rem;
+  color: var(--text2);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: var(--transition-theme);
+}
+.meta-chip span { font-weight: 700; color: var(--text); }
+
+/* ===========================
+   EXERCISE BLOCKS (GYM)
+   =========================== */
+.exercise-block {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  padding: 13px;
+  margin-bottom: 10px;
+  transition: var(--transition-theme);
+}
+.exercise-block .ex-name { font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; font-size: 0.9rem; }
+.ex-sets { display: flex; flex-wrap: wrap; gap: 6px; }
+.set-pill {
+  background: var(--bg4);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 4px 10px;
+  font-size: 0.76rem;
+  color: var(--text2);
+  transition: var(--transition-theme);
+}
+.set-pill strong { color: var(--accent); }
+
+.set-row { display: grid; grid-template-columns: 28px 1fr 1fr 1fr 24px; gap: 7px; align-items: center; margin-bottom: 6px; }
+.set-num {
+  font-size: 0.72rem; color: var(--text3); font-weight: 700;
+  background: var(--bg4); border-radius: 6px; padding: 6px 3px; text-align: center;
+  transition: var(--transition-theme);
+}
+
+/* ===========================
+   TABS
+   =========================== */
+.tabs { display: flex; background: var(--bg3); border-radius: var(--r2); padding: 3px; margin-bottom: 16px; gap: 2px; transition: var(--transition-theme); }
+.tab {
+  flex: 1; padding: 8px 4px;
+  border: none; background: none;
+  color: var(--text2);
+  font-family: 'DM Sans'; font-size: 0.78rem; font-weight: 600;
+  border-radius: 8px; cursor: pointer; transition: all 0.2s; text-align: center;
+}
+.tab.active { background: var(--bg); color: var(--accent); box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
+
+/* ===========================
+   SEARCH & FILTERS
+   =========================== */
+.search-bar { position: relative; margin-bottom: 13px; }
+.search-bar input { padding-left: 38px; }
+.search-bar svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text3); width: 17px; }
+.filter-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px; }
+.filter-chip {
+  padding: 5px 13px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  background: var(--bg3);
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.filter-chip.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+/* ===========================
+   HEART RATE
+   =========================== */
+.hr-display { display: flex; align-items: center; gap: 5px; color: var(--red); font-size: 0.8rem; font-weight: 600; }
+.hr-display .hr-num { font-family: 'Bebas Neue'; font-size: 1.15rem; }
+
+/* ===========================
+   MODAL
+   =========================== */
+#modal-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: var(--modal-bg);
+  z-index: 200;
+  align-items: flex-end;
+  justify-content: center;
+}
+#modal-overlay.open { display: flex; }
+#modal-box {
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  border-radius: 20px 20px 0 0;
+  width: 100%; max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 22px 18px 40px;
+  animation: slideUp 0.3s ease;
+  transition: background 0.3s;
+}
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: none; } }
+#modal-box .modal-handle { width: 38px; height: 3px; background: var(--border); border-radius: 999px; margin: 0 auto 18px; }
+
+/* ===========================
+   ACTIVITY TYPE SELECTOR
+   =========================== */
+.activity-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; margin-bottom: 18px; }
+.activity-opt {
+  background: var(--bg3);
+  border: 2px solid var(--border);
+  border-radius: var(--r2);
+  padding: 14px 6px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text2);
+}
+.activity-opt:hover { border-color: var(--accent); }
+.activity-opt.selected { border-color: var(--accent); background: rgba(255,107,53,0.1); color: var(--accent); }
+.activity-opt .act-icon { font-size: 1.5rem; display: block; margin-bottom: 5px; }
+
+/* ===========================
+   WEEK CALENDAR
+   =========================== */
+.week-header {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 14px;
+  margin-bottom: 14px;
+  transition: var(--transition-theme);
+}
+.week-nav { display: flex; align-items: center; justify-content: space-between; }
+.week-nav button {
+  background: var(--bg4); border: 1px solid var(--border);
+  color: var(--text); padding: 5px 12px;
+  border-radius: 7px; cursor: pointer;
+  font-family: 'DM Sans'; font-size: 0.82rem;
+  transition: all 0.2s;
+}
+.week-nav button:hover { border-color: var(--accent); }
+.week-label { font-family: 'Bebas Neue'; font-size: 1rem; color: var(--text); }
+.day-dots { display: flex; gap: 6px; margin-top: 12px; }
+.day-dot { flex: 1; text-align: center; }
+.day-dot .dd-label { font-size: 0.6rem; color: var(--text3); margin-bottom: 4px; font-weight: 700; }
+.day-dot .dd-circle {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: var(--bg4); border: 1px solid var(--border);
+  margin: 0 auto;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.58rem; color: var(--text3);
+  transition: var(--transition-theme);
+}
+.day-dot .dd-circle.has-workout { background: var(--accent); border-color: var(--accent); color: white; }
+.day-dot .dd-circle.today { border-color: var(--accent2); color: var(--accent2); }
+
+/* ===========================
+   CYCLING SEGMENTS
+   =========================== */
+.segment-row {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  padding: 12px;
+  margin-bottom: 8px;
+  transition: var(--transition-theme);
+}
+.segment-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; font-weight: 600; font-size: 0.85rem; }
+.add-segment-btn {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--bg3); border: 1px dashed var(--border);
+  border-radius: var(--r2); padding: 9px 13px;
+  color: var(--text2); font-size: 0.82rem; cursor: pointer;
+  width: 100%; margin-top: 8px;
+  font-family: 'DM Sans'; font-weight: 500;
+  transition: all 0.2s;
+}
+.add-segment-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ===========================
+   CHARTS VIEW
+   =========================== */
+.chart-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 18px;
+  margin-bottom: 16px;
+  transition: var(--transition-theme);
+}
+.chart-title {
+  font-family: 'Bebas Neue';
+  font-size: 1.05rem;
+  color: var(--text);
+  margin-bottom: 4px;
+  display: flex; align-items: center; gap: 6px;
+}
+.chart-subtitle { font-size: 0.74rem; color: var(--text2); margin-bottom: 14px; }
+.chart-container { position: relative; height: 200px; }
+.chart-container.tall { height: 240px; }
+.chart-selector { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.chart-chip {
+  padding: 4px 11px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border: 1px solid var(--border);
+  background: var(--bg3);
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.chart-chip.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+.chart-period-tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+.chart-period-tab {
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 0.72rem; font-weight: 700;
+  border: 1px solid var(--border);
+  background: var(--bg3); color: var(--text2);
+  cursor: pointer; transition: all 0.15s;
+}
+.chart-period-tab.active { border-color: var(--accent2); color: var(--accent2); }
+
+/* Summary bar under chart */
+.chart-summary { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; border-top: 1px solid var(--border); padding-top: 12px; }
+.chart-summary-item { flex: 1; min-width: 80px; text-align: center; }
+.chart-summary-item .csnum { font-family: 'Bebas Neue'; font-size: 1.3rem; color: var(--text); }
+.chart-summary-item .cslabel { font-size: 0.7rem; color: var(--text2); }
+
+/* ===========================
+   GOOGLE DRIVE PANEL
+   =========================== */
+.drive-card {
+  background: linear-gradient(135deg, #e8f0fe, #f3e8ff);
+  border: 1px solid #aecbfa;
+  border-radius: var(--r);
+  padding: 20px;
+  margin-bottom: 14px;
+}
+[data-theme="dark"] .drive-card {
+  background: linear-gradient(135deg, #0d1a33, #1a0a2e);
+  border-color: #1a3a6e;
+}
+.drive-card-title {
+  font-family: 'Bebas Neue';
+  font-size: 1.15rem;
+  color: #1a73e8;
+  margin-bottom: 4px;
+  display: flex; align-items: center; gap: 8px;
+}
+[data-theme="dark"] .drive-card-title { color: #8ab4f8; }
+.drive-card-desc { font-size: 0.82rem; color: var(--text2); margin-bottom: 14px; line-height: 1.5; }
+.drive-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.drive-config-section { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+.drive-config-label { font-size: 0.72rem; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 5px; }
+.drive-status-row { display: flex; align-items: center; gap: 10px; padding: 10px; background: var(--bg3); border-radius: var(--r2); margin-bottom: 10px; }
+.drive-status-info { flex: 1; }
+.drive-status-info .ds-title { font-size: 0.85rem; font-weight: 700; }
+.drive-status-info .ds-sub { font-size: 0.75rem; color: var(--text2); margin-top: 2px; }
+.drive-log { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r2); padding: 10px; font-size: 0.76rem; color: var(--text2); font-family: monospace; max-height: 120px; overflow-y: auto; margin-top: 10px; }
+.drive-log-entry { padding: 2px 0; border-bottom: 1px solid var(--border); }
+.drive-log-entry:last-child { border: none; }
+.drive-log-entry.ok { color: var(--green); }
+.drive-log-entry.err { color: var(--red); }
+.drive-log-entry.info { color: var(--accent2); }
+
+/* Config modal (Drive) */
+#drive-config-modal {
+  display: none;
+  position: fixed; inset: 0;
+  background: var(--modal-bg);
+  z-index: 300;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+#drive-config-modal.open { display: flex; }
+#drive-config-box {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 24px;
+  width: 100%;
+  max-width: 480px;
+  animation: scaleIn 0.2s ease;
+}
+@keyframes scaleIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+/* ===========================
+   EMPTY STATE & TOAST
+   =========================== */
+.empty-state { text-align: center; padding: 44px 20px; color: var(--text3); }
+.empty-state .big { font-size: 2.8rem; margin-bottom: 10px; }
+.empty-state p { font-size: 0.88rem; }
+
+#toast {
+  position: fixed;
+  bottom: 88px; left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--bg4);
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  padding: 9px 18px;
+  font-size: 0.83rem;
+  color: var(--text);
+  z-index: 500;
+  opacity: 0;
+  transition: all 0.3s;
+  white-space: nowrap;
+  max-width: 90vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ===========================
+   MISC
+   =========================== */
+.info-box {
+  background: var(--bg3);
+  border-left: 3px solid var(--accent2);
+  border-radius: 0 7px 7px 0;
+  padding: 9px 12px;
+  font-size: 0.8rem;
+  color: var(--text2);
+  margin-bottom: 12px;
+}
+.divider { height: 1px; background: var(--border); margin: 14px 0; }
+.sync-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 18px;
+  margin-bottom: 14px;
+}
+
+/* ===========================
+   RESPONSIVE
+   =========================== */
+@media (max-width: 480px) {
+  .form-row { grid-template-columns: 1fr; }
+  .stat-grid { grid-template-columns: 1fr 1fr; }
+  .topbar-right .date-chip { display: none; }
+}
+@media (min-width: 640px) {
+  .activity-grid { grid-template-columns: repeat(5, 1fr); }
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- TOP BAR -->
+  <div id="topbar">
+    <div class="logo">FIT<span>TRACK</span> <span style="font-size:0.65rem;color:var(--text3);font-family:'DM Sans';font-weight:600;">PRO v2</span></div>
+    <div class="topbar-right">
+      <div class="date-chip" id="today-chip"></div>
+      <div class="drive-status" id="drive-status-pill" onclick="showView('settings');setTimeout(()=>document.getElementById('settings-drive-section').scrollIntoView({behavior:'smooth'}),200)">
+        <div class="drive-dot" id="drive-dot"></div>
+        <span id="drive-status-label">Drive</span>
+      </div>
+      <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()" title="Cambiar tema">🌙</button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div id="main">
+
+    <!-- ===================== DASHBOARD ===================== -->
+    <div class="view active" id="view-dashboard">
+      <div class="section-title"><div class="dot"></div>Resumen Semanal</div>
+      <div class="week-header">
+        <div class="week-nav">
+          <button onclick="changeWeek(-1)">◀</button>
+          <div>
+            <div style="font-size:0.68rem;color:var(--text2);text-align:center;">Semana</div>
+            <div class="week-label" id="week-range-label"></div>
+          </div>
+          <button onclick="changeWeek(1)">▶</button>
+        </div>
+        <div class="day-dots" id="day-dots-row"></div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card orange"><div class="stat-num" id="stat-week-sessions">0</div><div class="stat-label">Sesiones esta semana</div><div class="stat-icon">🔥</div></div>
+        <div class="stat-card cyan"><div class="stat-num" id="stat-total-sessions">0</div><div class="stat-label">Total sesiones</div><div class="stat-icon">📊</div></div>
+        <div class="stat-card purple"><div class="stat-num" id="stat-week-streak">0</div><div class="stat-label">Racha de días</div><div class="stat-icon">⚡</div></div>
+        <div class="stat-card green"><div class="stat-num" id="stat-fav-activity">—</div><div class="stat-label">Actividad favorita</div><div class="stat-icon">🏆</div></div>
+      </div>
+
+      <div class="section-title"><div class="dot"></div>Últimos Entrenamientos</div>
+      <div id="recent-workouts-list"></div>
+      <button class="btn btn-primary btn-full" onclick="showView('add')" style="margin-top:6px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+        Registrar Entrenamiento
+      </button>
+    </div>
+
+    <!-- ===================== ADD WORKOUT ===================== -->
+    <div class="view" id="view-add">
+      <div class="section-title"><div class="dot"></div>Nuevo Entrenamiento</div>
+      <div class="card card-sm">
+        <div class="form-row">
+          <div class="form-group" style="margin:0"><label class="form-label">Fecha</label><input type="date" class="form-control" id="f-date"></div>
+          <div class="form-group" style="margin:0"><label class="form-label">Hora</label><input type="time" class="form-control" id="f-time"></div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tipo de Actividad</label>
+        <div class="activity-grid">
+          <div class="activity-opt" onclick="selectActivity('cycling')" data-act="cycling"><span class="act-icon">🚴</span>Ciclismo</div>
+          <div class="activity-opt" onclick="selectActivity('gym')" data-act="gym"><span class="act-icon">🏋️</span>Gimnasio</div>
+          <div class="activity-opt" onclick="selectActivity('running')" data-act="running"><span class="act-icon">🏃</span>Carrera</div>
+          <div class="activity-opt" onclick="selectActivity('rowing')" data-act="rowing"><span class="act-icon">🚣</span>Remo</div>
+          <div class="activity-opt" onclick="selectActivity('hiking')" data-act="hiking"><span class="act-icon">🥾</span>Senderismo</div>
+        </div>
+      </div>
+      <div id="activity-form-area"></div>
+      <div id="common-fields" style="display:none;">
+        <div class="card card-sm">
+          <div class="section-title" style="font-size:1rem;margin-bottom:12px;"><div class="dot"></div>Pulsaciones</div>
+          <div class="form-row">
+            <div class="form-group" style="margin:0"><label class="form-label">FC Media (bpm)</label><input type="number" class="form-control" id="f-hr-avg" placeholder="145" min="40" max="220"></div>
+            <div class="form-group" style="margin:0"><label class="form-label">FC Máxima (bpm)</label><input type="number" class="form-control" id="f-hr-max" placeholder="175" min="40" max="220"></div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Observaciones / Sensaciones</label>
+          <textarea class="form-control" id="f-observations" placeholder="Cómo te has sentido, fatiga, condiciones, notas..."></textarea>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn btn-primary" style="flex:1;" onclick="saveWorkout()">💾 Guardar</button>
+          <button class="btn btn-secondary" onclick="resetForm()">✕ Limpiar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== HISTORY ===================== -->
+    <div class="view" id="view-history">
+      <div class="section-title"><div class="dot"></div>Historial</div>
+      <div class="search-bar">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" class="form-control" id="search-input" placeholder="Buscar ejercicio, actividad, ruta..." oninput="filterWorkouts()">
+      </div>
+      <div class="filter-chips">
+        <div class="filter-chip active" onclick="setFilter('all',this)">Todos</div>
+        <div class="filter-chip" onclick="setFilter('cycling',this)">🚴 Ciclismo</div>
+        <div class="filter-chip" onclick="setFilter('gym',this)">🏋️ Gimnasio</div>
+        <div class="filter-chip" onclick="setFilter('running',this)">🏃 Carrera</div>
+        <div class="filter-chip" onclick="setFilter('rowing',this)">🚣 Remo</div>
+        <div class="filter-chip" onclick="setFilter('hiking',this)">🥾 Senderismo</div>
+      </div>
+      <div class="tabs">
+        <button class="tab active" onclick="setTimeFilter('all',this)">Todo</button>
+        <button class="tab" onclick="setTimeFilter('today',this)">Hoy</button>
+        <button class="tab" onclick="setTimeFilter('week',this)">Semana</button>
+        <button class="tab" onclick="setTimeFilter('month',this)">Mes</button>
+      </div>
+      <div id="history-list"></div>
+    </div>
+
+    <!-- ===================== CHARTS ===================== -->
+    <div class="view" id="view-charts">
+      <div class="section-title"><div class="dot"></div>Evolución y Análisis</div>
+
+      <!-- Period selector -->
+      <div class="chart-period-tabs">
+        <div class="chart-period-tab active" onclick="setChartPeriod('4w',this)">4 Semanas</div>
+        <div class="chart-period-tab" onclick="setChartPeriod('3m',this)">3 Meses</div>
+        <div class="chart-period-tab" onclick="setChartPeriod('6m',this)">6 Meses</div>
+        <div class="chart-period-tab" onclick="setChartPeriod('all',this)">Todo</div>
+      </div>
+
+      <!-- Sessions per week -->
+      <div class="chart-card">
+        <div class="chart-title">📅 Sesiones por Semana</div>
+        <div class="chart-subtitle">Frecuencia de entrenamientos en el tiempo</div>
+        <div class="chart-container"><canvas id="chart-sessions"></canvas></div>
+        <div class="chart-summary" id="chart-sessions-summary"></div>
+      </div>
+
+      <!-- Activity breakdown -->
+      <div class="chart-card">
+        <div class="chart-title">🏅 Distribución por Actividad</div>
+        <div class="chart-subtitle">Porcentaje de tiempo dedicado a cada disciplina</div>
+        <div class="chart-container" style="height:180px;"><canvas id="chart-activity-pie"></canvas></div>
+      </div>
+
+      <!-- Distance evolution -->
+      <div class="chart-card">
+        <div class="chart-title">📍 Evolución de Distancia</div>
+        <div class="chart-subtitle">Kilómetros por entrenamiento</div>
+        <div class="chart-selector">
+          <div class="chart-chip active" onclick="setDistActivity('cycling',this)">🚴 Ciclismo</div>
+          <div class="chart-chip" onclick="setDistActivity('running',this)">🏃 Carrera</div>
+          <div class="chart-chip" onclick="setDistActivity('rowing',this)">🚣 Remo</div>
+          <div class="chart-chip" onclick="setDistActivity('hiking',this)">🥾 Senderismo</div>
+        </div>
+        <div class="chart-container"><canvas id="chart-distance"></canvas></div>
+        <div class="chart-summary" id="chart-distance-summary"></div>
+      </div>
+
+      <!-- Heart rate trends -->
+      <div class="chart-card">
+        <div class="chart-title">❤️ Tendencia de Pulsaciones</div>
+        <div class="chart-subtitle">FC media y máxima por sesión</div>
+        <div class="chart-container"><canvas id="chart-hr"></canvas></div>
+        <div class="chart-summary" id="chart-hr-summary"></div>
+      </div>
+
+      <!-- Gym volume -->
+      <div class="chart-card">
+        <div class="chart-title">🏋️ Volumen de Gimnasio</div>
+        <div class="chart-subtitle">Total kg levantados por sesión (reps × peso)</div>
+        <div class="chart-container"><canvas id="chart-gym"></canvas></div>
+        <div class="chart-summary" id="chart-gym-summary"></div>
+      </div>
+
+      <!-- Exercise weight evolution -->
+      <div class="chart-card">
+        <div class="chart-title">📈 Evolución de Peso por Ejercicio</div>
+        <div class="chart-subtitle">Peso máximo levantado en cada sesión para un ejercicio concreto</div>
+        <div id="exercise-weight-selector" style="margin-bottom:14px;">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <select class="form-control" id="weight-exercise-select" onchange="onWeightExerciseChange()" style="flex:1;min-width:180px;max-width:340px;">
+              <option value="">Selecciona un ejercicio...</option>
+            </select>
+            <div style="font-size:0.74rem;color:var(--text3);">Solo muestra ejercicios con datos registrados</div>
+          </div>
+        </div>
+        <div class="chart-container" id="weight-chart-container"><canvas id="chart-exercise-weight"></canvas></div>
+        <div id="weight-chart-empty" style="display:none;" class="empty-state" style="padding:20px 0;"><div class="big" style="font-size:2rem;">💪</div><p>Selecciona un ejercicio para ver su evolución</p></div>
+        <div class="chart-summary" id="chart-exercise-weight-summary"></div>
+      </div>
+    </div>
+
+    <!-- ===================== SETTINGS ===================== -->
+    <div class="view" id="view-settings">
+      <div class="section-title"><div class="dot"></div>Ajustes y Datos</div>
+
+      <!-- GOOGLE DRIVE -->
+      <div id="settings-drive-section">
+        <div class="drive-card">
+          <div class="drive-card-title">
+            <svg width="20" height="20" viewBox="0 0 87.3 78" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3L27.5 53H0c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/>
+              <path d="M43.65 25L29.9 1.2C28.55 2 27.4 3.1 26.6 4.5L1.2 48.5C.4 49.9 0 51.45 0 53h27.5z" fill="#00ac47"/>
+              <path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.76 7.65-13.24c.8-1.4 1.2-2.95 1.2-4.5H59.8l5.9 11.5z" fill="#ea4335"/>
+              <path d="M43.65 25L57.4 1.2C56.05.4 54.5 0 52.95 0H34.35c-1.55 0-3.1.45-4.45 1.2z" fill="#00832d"/>
+              <path d="M59.8 53H27.5L13.75 76.8c1.35.8 2.9 1.2 4.45 1.2h50.9c1.55 0 3.1-.4 4.45-1.2z" fill="#2684fc"/>
+              <path d="M73.4 26.5l-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25 59.8 53h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00"/>
+            </svg>
+            Google Drive Sync
+          </div>
+          <div class="drive-card-desc">Sincroniza tus datos automáticamente entre tu PC con Windows y la app Android. Tus entrenamientos se guardan en tu propio Google Drive como un archivo JSON privado.</div>
+          <div class="drive-status-row">
+            <div id="drive-big-dot" style="width:10px;height:10px;border-radius:50%;background:var(--text3);flex-shrink:0;"></div>
+            <div class="drive-status-info">
+              <div class="ds-title" id="drive-main-status">No conectado</div>
+              <div class="ds-sub" id="drive-main-sub">Configura tu Client ID para empezar</div>
+            </div>
+            <button class="btn btn-sm btn-drive" id="drive-connect-btn" onclick="driveConnect()">Conectar</button>
+          </div>
+          <div class="drive-actions">
+            <button class="btn btn-sm btn-drive" onclick="drivePush()" id="drive-push-btn" disabled>📤 Subir a Drive</button>
+            <button class="btn btn-sm btn-drive" onclick="drivePull()" id="drive-pull-btn" disabled>📥 Descargar de Drive</button>
+            <button class="btn btn-sm btn-secondary" onclick="openDriveConfig()">⚙️ Configurar</button>
+          </div>
+
+          <!-- Auto-sync toggle -->
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+            <div style="font-size:0.82rem;color:var(--text2);">Sincronización automática al guardar</div>
+            <label style="position:relative;display:inline-block;width:44px;height:24px;">
+              <input type="checkbox" id="auto-sync-toggle" style="opacity:0;width:0;height:0;" onchange="toggleAutoSync(this.checked)">
+              <span id="toggle-track" style="position:absolute;cursor:pointer;inset:0;background:var(--bg4);border-radius:12px;border:1px solid var(--border);transition:all 0.3s;"></span>
+              <span id="toggle-thumb" style="position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:var(--text3);border-radius:50%;transition:all 0.3s;"></span>
+            </label>
+          </div>
+
+          <div class="drive-log" id="drive-log">
+            <div class="drive-log-entry info">[Sistema] FitTrack Pro v2 iniciado</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- EXPORT/IMPORT LOCAL -->
+      <div class="sync-card">
+        <div style="font-family:'Bebas Neue';font-size:1rem;margin-bottom:10px;">📦 Exportar / Importar Local</div>
+        <div style="font-size:0.82rem;color:var(--text2);margin-bottom:12px;">Respaldo manual en formato JSON para máxima compatibilidad.</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn btn-secondary btn-sm" onclick="exportData()">📤 Exportar JSON</button>
+          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('import-file').click()">📥 Importar JSON</button>
+          <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+        </div>
+      </div>
+
+      <!-- THEME -->
+      <div class="card card-sm">
+        <div style="font-family:'Bebas Neue';font-size:1rem;margin-bottom:12px;">🎨 Apariencia</div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn btn-secondary btn-sm" onclick="setTheme('dark')" id="btn-dark-theme">🌙 Modo Oscuro</button>
+          <button class="btn btn-secondary btn-sm" onclick="setTheme('light')" id="btn-light-theme">☀️ Modo Claro</button>
+        </div>
+      </div>
+
+      <!-- INSTALL PWA -->
+      <div class="card card-sm">
+        <div style="font-family:'Bebas Neue';font-size:1rem;margin-bottom:10px;">📱 Instalar como App</div>
+        <div style="font-size:0.82rem;color:var(--text2);margin-bottom:12px;">Android: Chrome → ⋮ → "Añadir a pantalla de inicio". Windows: icono ⊕ en barra de Chrome/Edge.</div>
+        <button class="btn btn-secondary btn-sm" id="install-btn" style="display:none;" onclick="installPWA()">⬇️ Instalar App</button>
+        <div id="install-info" style="font-size:0.75rem;color:var(--text3);">La app se instalará como PWA nativa.</div>
+      </div>
+
+      <!-- STATS -->
+      <div class="card card-sm">
+        <div style="font-family:'Bebas Neue';font-size:1rem;margin-bottom:10px;">📊 Estadísticas Globales</div>
+        <div id="global-stats-area"></div>
+      </div>
+
+      <!-- DANGER ZONE -->
+      <div class="card card-sm" style="border-color:var(--red);opacity:0.9;">
+        <div style="font-family:'Bebas Neue';font-size:1rem;margin-bottom:8px;color:var(--red);">⚠️ Zona de Peligro</div>
+        <div style="font-size:0.8rem;color:var(--text2);margin-bottom:12px;">Borra todos tus entrenamientos. Esta acción no se puede deshacer.</div>
+        <button class="btn btn-danger btn-sm" onclick="clearAllData()">🗑️ Borrar todos los datos</button>
+      </div>
+    </div>
+
+  </div><!-- /#main -->
+
+  <!-- BOTTOM NAV -->
+  <nav id="bottom-nav">
+    <button class="nav-btn active" onclick="showView('dashboard')" id="nav-dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Inicio
+    </button>
+    <button class="nav-btn" onclick="showView('add')" id="nav-add">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9" stroke-width="1.5"/><path d="M12 8v8M8 12h8" stroke-linecap="round"/></svg>
+      Registrar
+    </button>
+    <button class="nav-btn" onclick="showView('history')" id="nav-history">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9" stroke-width="1.5"/></svg>
+      Historial
+    </button>
+    <button class="nav-btn" onclick="showView('charts')" id="nav-charts">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Evolución
+    </button>
+    <button class="nav-btn" onclick="showView('settings')" id="nav-settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+      Ajustes
+    </button>
+  </nav>
+</div>
+
+<!-- DETAIL MODAL -->
+<div id="modal-overlay" onclick="closeModal(event)">
+  <div id="modal-box">
+    <div class="modal-handle"></div>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<!-- GOOGLE DRIVE CONFIG MODAL -->
+<div id="drive-config-modal">
+  <div id="drive-config-box">
+    <div style="font-family:'Bebas Neue';font-size:1.3rem;margin-bottom:6px;">⚙️ Configurar Google Drive</div>
+    <div style="font-size:0.82rem;color:var(--text2);margin-bottom:16px;line-height:1.5;">
+      Necesitas un <strong>Google OAuth Client ID</strong> para activar la sincronización. Es gratuito y privado — solo tú accedes a tus datos.
+    </div>
+    <div style="background:var(--bg3);border-radius:var(--r2);padding:12px;margin-bottom:14px;font-size:0.78rem;color:var(--text2);line-height:1.6;">
+      <strong style="color:var(--text);">Pasos:</strong><br>
+      1. Ve a <strong style="color:var(--accent2);">console.cloud.google.com</strong><br>
+      2. Crea un proyecto → API & Services → Habilita <em>Google Drive API</em><br>
+      3. Credenciales → OAuth 2.0 → Tipo: <em>Aplicación Web</em><br>
+      4. Orígenes autorizados: añade la URL donde abres esta app<br>
+      5. Copia el <strong>Client ID</strong> y pégalo abajo
+    </div>
+    <div class="form-group">
+      <label class="form-label">Google OAuth Client ID</label>
+      <input type="text" class="form-control" id="drive-client-id-input" placeholder="xxxxxxxx.apps.googleusercontent.com">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Nombre del archivo en Drive</label>
+      <input type="text" class="form-control" id="drive-filename-input" value="fittrack_data.json" placeholder="fittrack_data.json">
+    </div>
+    <div style="display:flex;gap:10px;margin-top:4px;">
+      <button class="btn btn-primary btn-sm" style="flex:1;" onclick="saveDriveConfig()">💾 Guardar y Conectar</button>
+      <button class="btn btn-secondary btn-sm" onclick="closeDriveConfig()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ============================================================
+// CONSTANTS & STATE
+// ============================================================
+const DB_NAME = 'fittrack_db';
+const DB_VERSION = 1;
+let db;
+let currentActivity = null;
+let gymExercises = [];
+let cyclingSegments = [];
+let currentFilter = 'all';
+let currentTimeFilter = 'all';
+let currentWeekOffset = 0;
+let currentChartPeriod = '4w';
+let currentDistActivity = 'cycling';
+let currentWeightExercise = '';
+let deferredPrompt = null;
+let driveAutoSync = false;
+let charts = {};
+
+// ============================================================
+// EXERCISE DATABASE
+// ============================================================
+const GYM_EXERCISES = {
+  'Peso Corporal':['Flexiones (push-ups)','Flexiones declinadas','Flexiones inclinadas','Flexiones diamante','Dominadas (pull-ups)','Dominadas neutras','Dominadas supinas (chin-ups)','Fondos en paralelas','Fondos en silla','Sentadilla','Sentadilla sumo','Pistol squat','Zancadas','Zancadas inversas','Zancadas laterales','Glute bridge','Hip thrust corporal','Burpees','Mountain climbers','Jump squat','Plancha','Plancha lateral','Plancha inversa','Plancha con toque de hombros','Crunch','Crunch bicicleta','Crunch oblicuos','Leg raises','Hollow body','Superman','Hiperextensión en suelo','Pike push-up'],
+  'Mancuernas':['Curl bíceps mancuerna','Curl martillo','Curl concentrado','Curl predicador mancuerna','Press de banca mancuerna','Press inclinado mancuerna','Press declinado mancuerna','Apertura pecho (fly) mancuerna','Apertura inclinada mancuerna','Press militar mancuerna','Elevación lateral','Elevación frontal','Pájaro (rear delt fly)','Remo con mancuerna','Extensión tríceps sobre cabeza mancuerna','Press francés mancuerna','Patada de tríceps','Sentadilla goblet','Peso muerto mancuerna','Peso muerto rumano mancuerna','Hip thrust mancuerna','Zancada con mancuerna','Encogimiento de hombros mancuerna','Swing mancuerna'],
+  'Barra':['Press de banca barra','Press inclinado barra','Press declinado barra','Curl bíceps barra','Curl barra EZ','Curl predicador barra','Press militar barra','Remo Pendlay','Remo pronado barra','Sentadilla barra libre','Sentadilla frontal','Peso muerto barra','Peso muerto rumano','Peso muerto sumo','Hip thrust barra','Good morning barra','Extensión tríceps barra (skull crusher)','Press francés barra EZ','Dominadas lastradas','Encogimiento de hombros barra','Power clean'],
+  'Máquina Fitness Teck S9000':['Jalón al pecho (Lat pulldown)','Remo en polea baja','Remo con cuerda','Remo polea baja neutro','Press de pecho en polea','Cruce de poleas (cable crossover)','Fly en polea baja','Fly en polea alta','Curl bíceps en polea','Curl bíceps polea alta','Curl martillo en polea','Extensión tríceps en polea alta','Tríceps en cuerda polea alta','Kick-back en polea','Press hombros en polea','Elevación lateral en polea','Face pull en polea','Sentadilla en polea baja','Patada de glúteo en polea','Abducción cadera polea','Aducción cadera polea','Curl femoral en polea','Crunch en polea alta','Rotación de core en polea','Presión de hombros en cable','Upright row en polea','Shrug en polea']
+};
+const CYCLING_WORKOUT_TYPES=['Rodaje Z1 (Recuperación)','Rodaje Z2 (Base aeróbica)','Tempo Z3','Umbral Z4','VO2max Z5','Anaeróbico / Sprint','Interval Training','Series de montaña','Fondo largo','Fartlek','SweetSpot','Escalada / Col','Criterium','Personalizado'];
+const ROWING_WORKOUT_TYPES=['Rodaje continuo','Intervalos','Pirámide','Series cortas (500m)','Series largas (2000m)','Test 2000m','Técnica','Fondo'];
+const RUNNING_WORKOUT_TYPES=['Rodaje suave','Rodaje medio','Tempo','Intervalos en pista','Fartlek','Tirada larga','Series de cuestas','Carrera progresiva','Test de velocidad','Cross / Trail'];
+const RUNNING_SURFACE=['Asfalto','Tierra / Trail','Pista de atletismo','Cinta','Hierba','Montaña'];
+const HIKING_DIFFICULTY=['Fácil','Moderado','Difícil','Muy difícil','Alpinismo técnico'];
+const actLabels={cycling:'Ciclismo',gym:'Gimnasio',running:'Carrera',rowing:'Remo',hiking:'Senderismo'};
+const actEmojis={cycling:'🚴',gym:'🏋️',running:'🏃',rowing:'🚣',hiking:'🥾'};
+const actColors={cycling:'#00b8d9',gym:'#a855f7',running:'#fbbf24',rowing:'#22c55e',hiking:'#84cc16'};
+
+// ============================================================
+// INDEXEDDB
+// ============================================================
+function initDB() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = e => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains('workouts')) {
+        const s = d.createObjectStore('workouts', {keyPath:'id'});
+        s.createIndex('date','date'); s.createIndex('activity','activity');
+      }
+    };
+    req.onsuccess = e => { db = e.target.result; res(); };
+    req.onerror = rej;
+  });
+}
+function dbAll() {
+  return new Promise((res,rej) => {
+    const tx = db.transaction('workouts','readonly');
+    const req = tx.objectStore('workouts').getAll();
+    req.onsuccess = () => res(req.result.sort((a,b) => b.id - a.id));
+    req.onerror = rej;
+  });
+}
+function dbAdd(w) {
+  return new Promise((res,rej) => {
+    const tx = db.transaction('workouts','readwrite');
+    tx.objectStore('workouts').add(w);
+    tx.oncomplete = res; tx.onerror = rej;
+  });
+}
+function dbDelete(id) {
+  return new Promise((res,rej) => {
+    const tx = db.transaction('workouts','readwrite');
+    tx.objectStore('workouts').delete(id);
+    tx.oncomplete = res; tx.onerror = rej;
+  });
+}
+function dbClear() {
+  return new Promise((res,rej) => {
+    const tx = db.transaction('workouts','readwrite');
+    tx.objectStore('workouts').clear();
+    tx.oncomplete = res; tx.onerror = rej;
+  });
+}
+function dbBulkAdd(items) {
+  return new Promise((res,rej) => {
+    const tx = db.transaction('workouts','readwrite');
+    const s = tx.objectStore('workouts');
+    items.forEach(item => s.put(item));
+    tx.oncomplete = res; tx.onerror = rej;
+  });
+}
+
+// ============================================================
+// THEME
+// ============================================================
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme');
+  setTheme(current === 'dark' ? 'light' : 'dark');
+}
+function setTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('fittrack-theme', theme);
+  document.getElementById('theme-btn').textContent = theme === 'dark' ? '🌙' : '☀️';
+  document.querySelector('meta[name="theme-color"]').content = theme === 'dark' ? '#0d0d0f' : '#f2f2f7';
+  // Re-render charts with new theme colors
+  if (document.getElementById('view-charts').classList.contains('active')) {
+    setTimeout(renderCharts, 100);
+  }
+  updateThemeButtons();
+}
+function updateThemeButtons() {
+  const t = document.documentElement.getAttribute('data-theme');
+  document.getElementById('btn-dark-theme').style.opacity = t === 'dark' ? '1' : '0.5';
+  document.getElementById('btn-light-theme').style.opacity = t === 'light' ? '1' : '0.5';
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  const nb = document.getElementById('nav-' + name);
+  if (nb) nb.classList.add('active');
+  if (name === 'dashboard') refreshDashboard();
+  if (name === 'history') refreshHistory();
+  if (name === 'charts') { setTimeout(renderCharts, 50); }
+  if (name === 'settings') refreshSettings();
+}
+
+// ============================================================
+// ACTIVITY FORMS
+// ============================================================
+function selectActivity(act) {
+  currentActivity = act; gymExercises = []; cyclingSegments = [];
+  document.querySelectorAll('.activity-opt').forEach(o => o.classList.toggle('selected', o.dataset.act === act));
+  document.getElementById('common-fields').style.display = 'block';
+  renderActivityForm(act);
+}
+function renderActivityForm(act) {
+  const area = document.getElementById('activity-form-area');
+  if (act === 'cycling') area.innerHTML = renderCyclingForm();
+  else if (act === 'gym') area.innerHTML = renderGymForm();
+  else if (act === 'running') area.innerHTML = renderRunningForm();
+  else if (act === 'rowing') area.innerHTML = renderRowingForm();
+  else if (act === 'hiking') area.innerHTML = renderHikingForm();
+  if (act === 'cycling') { cyclingSegments = [newCyclingSegment()]; renderCyclingSegments(); }
+}
+function renderCyclingForm() {
+  return `<div class="card card-sm"><div class="section-title" style="font-size:1rem;margin-bottom:12px;"><div class="dot"></div>🚴 Ciclismo</div>
+  <div class="form-row"><div class="form-group" style="margin:0"><label class="form-label">Distancia (km)</label><input type="number" class="form-control" id="c-distance" placeholder="0" step="0.1"></div>
+  <div class="form-group" style="margin:0"><label class="form-label">Tiempo total</label><input type="text" class="form-control" id="c-duration" placeholder="1h 30m"></div></div>
+  <div class="form-row" style="margin-top:10px;"><div class="form-group" style="margin:0"><label class="form-label">Velocidad media (km/h)</label><input type="number" class="form-control" id="c-speed-avg" placeholder="28.5" step="0.1"></div>
+  <div class="form-group" style="margin:0"><label class="form-label">Velocidad máxima (km/h)</label><input type="number" class="form-control" id="c-speed-max" placeholder="52.3" step="0.1"></div></div>
+  <div class="form-row" style="margin-top:10px;"><div class="form-group" style="margin:0"><label class="form-label">Desnivel + (m)</label><input type="number" class="form-control" id="c-elevation" placeholder="0"></div>
+  <div class="form-group" style="margin:0"><label class="form-label">Potencia media (W)</label><input type="number" class="form-control" id="c-power" placeholder="0"></div></div></div>
+  <div class="card card-sm" style="margin-bottom:12px;"><div class="section-title" style="font-size:1rem;margin-bottom:4px;"><div class="dot"></div>Segmentos de Entrenamiento</div>
+  <div class="info-box">Añade bloques de trabajo: calentamiento, series, zonas...</div>
+  <div id="cycling-segments-list"></div>
+  <button class="add-segment-btn" onclick="addCyclingSegment()">+ Añadir Segmento</button></div>`;
+}
+function renderGymForm() {
+  return `<div class="card card-sm"><div class="section-title" style="font-size:1rem;margin-bottom:12px;"><div class="dot"></div>🏋️ Gimnasio</div>
+  <div class="info-box">Añade ejercicios de cualquier categoría en el mismo entrenamiento.</div>
+  <div id="gym-exercises-list"></div>
+  <div style="margin-top:10px;"><label class="form-label">Añadir Ejercicio</label>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+  <select class="form-control" id="gym-cat-select" onchange="updateGymExSelect()" style="flex:1;min-width:120px;"><option value="">Categoría...</option>${Object.keys(GYM_EXERCISES).map(k=>`<option value="${k}">${k}</option>`).join('')}</select>
+  <select class="form-control" id="gym-ex-select" style="flex:2;min-width:140px;"><option value="">Ejercicio...</option></select>
+  <button class="btn btn-primary btn-sm" onclick="addGymExercise()">+ Añadir</button></div></div></div>`;
+}
+function renderRunningForm() {
+  return `<div class="card card-sm"><div class="section-title" style="font-size:1rem;margin-bottom:12px;"><div class="dot"></div>🏃 Carrera</div>
+  <div class="form-row"><div class="form-group" style="margin:0"><label class="form-label">Tipo</label><select class="form-control" id="r-type"><option value="">Seleccionar...</option>${RUNNING_WORKOUT_TYPES.map(t=>`<option value="${t}">${t}</option>`).join('')}</select></div>
+  <div class="form-group" style="margin:0"><label class="form-label">Superficie</label><select class="form-control" id="r-surface">${RUNNING_SURFACE.map(s=>`<option value="${s}">${s}</option>`).join('')}</select></div></div>
+  <div class="form-row" style="margin-top:10px;"><div class="form-group" style="margin:0"><label class="form-label">Distancia (km)</label><input type="number" class="form-control" id="r-distance" placeholder="0" step="0.01"></div>
+  <div class="form-group" style="margin:0"><label class="form-label">Tiempo</label><input type="text" class="form-control" id="r-duration" placeholder="45m 30s"></div></div>
+  <div class="form-row" style="margin-top:10px;"><div class="form-group" style="margin:0"><label class="form-label">Ritmo (min/km)</label><input type="text" class="form-control" id="r-pace" placeholder="5:30"></div>
+  <div class="form-group" style="margin:0"><label class="form-label">Desnivel + (m)</label><input type="number" class="form-control" id="r-elevation" placeholder="0"></div></div></div>`;
+}
+function renderRowingForm() {
+  return `<div class="card card-sm"><div class="section-title" style="font-size:1rem;margin-bottom:12px;"><div class="dot"></div>🚣 Remo</div>
+  <div class="form-row"><div class="form-group" style="margin:0"><label class="form-label">Tipo</label><select class="form-control" id="row-type">${ROWING_WORKOUT_TYPES.map(t=>`<option value="${t}">${t}</option>`).join('')}</select></div>
+  <div class="form-group" style="margin:0"><label class="form-label">Distancia (m)</label><input type="number" class="form-control" id="row-distance" placeholder="5000"></div></div>
+  <div class="form-row" style="margin-top:10px;"><div class="form-group" style="margin:0"><label class="form-label">Tiempo</label><input type="text" class="form-control" id="row-duration" placeholder="20m"></div>
+  <div class="form-group" style="margin:0"><label class="form-label">Ritmo (s/500m)</label><input type="text" class="form-control" id="row-pace" placeholder="2:05"></div></div>
+  <div class="form-row" style="margin-top:10px;"><div class="form-group" style="margin:0"><label class="form-label">Paladas/min (SPM)</label><input type="number" class="form-control" id="row-spm" placeholder="22"></div>
+  <div class="form-group" style="margin:0"><label class="form-label">Potencia media (W)</label><input type="number" class="form-control" id="row-power" placeholder="0"></div></div></div>`;
+}
+function renderHikingForm() {
+  return `<div class="card card-sm"><div class="section-title" style="font-size:1rem;margin-bottom:12px;"><div class="dot"></div>🥾 Senderismo / Alpinismo</div>
+  <div class="form-group"><label class="form-label">Nombre de la ruta</label><input type="text" class="form-control" id="h-route" placeholder="Pico Aneto, Camino de Santiago..."></div>
+  <div class="form-row"><div class="form-group" style="margin:0"><label class="form-label">Distancia (km)</label><input type="number" class="form-control" id="h-distance" step="0.1" placeholder="15"></div>
+  <div class="form-group" style="margin:0"><label class="form-label">Tiempo</label><input type="text" class="form-control" id="h-duration" placeholder="4h 30m"></div></div>
+  <div class="form-row" style="margin-top:10px;"><div class="form-group" style="margin:0"><label class="form-label">Desnivel + (m)</label><input type="number" class="form-control" id="h-elevation" placeholder="1200"></div>
+  <div class="form-group" style="margin:0"><label class="form-label">Altitud máx (m)</label><input type="number" class="form-control" id="h-alt-max" placeholder="3404"></div></div>
+  <div class="form-group" style="margin-top:10px;"><label class="form-label">Dificultad</label><select class="form-control" id="h-difficulty">${HIKING_DIFFICULTY.map(d=>`<option value="${d}">${d}</option>`).join('')}</select></div></div>`;
+}
+
+// Cycling segments
+function newCyclingSegment() { return {id: Date.now()+Math.random(), type:'', duration:'', zone:'', notes:''}; }
+function addCyclingSegment() { cyclingSegments.push(newCyclingSegment()); renderCyclingSegments(); }
+function removeCyclingSegment(id) { cyclingSegments = cyclingSegments.filter(s=>s.id!==id); renderCyclingSegments(); }
+function updateSegment(id, field, value) { const s=cyclingSegments.find(s=>s.id===id); if(s) s[field]=value; }
+function renderCyclingSegments() {
+  const c = document.getElementById('cycling-segments-list');
+  if (!c) return;
+  c.innerHTML = cyclingSegments.map((seg,i) => `
+  <div class="segment-row"><div class="segment-header"><span style="color:var(--text2);font-size:0.75rem;">Segmento ${i+1}</span>
+  <button onclick="removeCyclingSegment(${seg.id})" class="btn btn-danger btn-sm" style="padding:3px 8px;font-size:0.72rem;">✕</button></div>
+  <div class="form-row"><div class="form-group" style="margin:0"><label class="form-label">Tipo</label>
+  <select class="form-control" onchange="updateSegment(${seg.id},'type',this.value)"><option value="">Seleccionar...</option>
+  ${CYCLING_WORKOUT_TYPES.map(t=>`<option value="${t}" ${seg.type===t?'selected':''}>${t}</option>`).join('')}</select></div>
+  <div class="form-group" style="margin:0"><label class="form-label">Zona</label>
+  <select class="form-control" onchange="updateSegment(${seg.id},'zone',this.value)"><option value="">-</option>
+  <option value="Z1" ${seg.zone==='Z1'?'selected':''}>Z1 - Recuperación</option><option value="Z2" ${seg.zone==='Z2'?'selected':''}>Z2 - Base</option>
+  <option value="Z3" ${seg.zone==='Z3'?'selected':''}>Z3 - Tempo</option><option value="Z4" ${seg.zone==='Z4'?'selected':''}>Z4 - Umbral</option>
+  <option value="Z5" ${seg.zone==='Z5'?'selected':''}>Z5 - VO2max</option></select></div></div>
+  <div class="form-row" style="margin-top:8px;"><div class="form-group" style="margin:0"><label class="form-label">Duración</label>
+  <input type="text" class="form-control" value="${seg.duration}" placeholder="20m" onchange="updateSegment(${seg.id},'duration',this.value)"></div>
+  <div class="form-group" style="margin:0"><label class="form-label">Notas</label>
+  <input type="text" class="form-control" value="${seg.notes}" placeholder="x5 series, 1' descanso..." onchange="updateSegment(${seg.id},'notes',this.value)"></div></div></div>`).join('');
+}
+
+// Gym exercises
+function updateGymExSelect() {
+  const cat = document.getElementById('gym-cat-select').value;
+  const sel = document.getElementById('gym-ex-select');
+  sel.innerHTML = '<option value="">Ejercicio...</option>';
+  if (cat && GYM_EXERCISES[cat]) GYM_EXERCISES[cat].forEach(ex => { const o=document.createElement('option'); o.value=ex; o.textContent=ex; sel.appendChild(o); });
+}
+function addGymExercise() {
+  const ex = document.getElementById('gym-ex-select').value;
+  if (!ex) { toast('Selecciona un ejercicio'); return; }
+  if (gymExercises.find(e=>e.name===ex)) { toast('Ejercicio ya añadido'); return; }
+  gymExercises.push({id:Date.now(), name:ex, sets:[{reps:'',weight:'',time:''}]});
+  renderGymExercises();
+}
+function removeGymExercise(id) { gymExercises=gymExercises.filter(e=>e.id!==id); renderGymExercises(); }
+function addSet(exId) { const ex=gymExercises.find(e=>e.id===exId); if(ex){ex.sets.push({reps:'',weight:'',time:''}); renderGymExercises();} }
+function removeSet(exId,si) { const ex=gymExercises.find(e=>e.id===exId); if(ex&&ex.sets.length>1){ex.sets.splice(si,1); renderGymExercises();} }
+function updateSet(exId,si,field,value) { const ex=gymExercises.find(e=>e.id===exId); if(ex&&ex.sets[si]) ex.sets[si][field]=value; }
+function renderGymExercises() {
+  const c = document.getElementById('gym-exercises-list');
+  if (!c) return;
+  c.innerHTML = gymExercises.map(ex => `
+  <div class="exercise-block"><div class="ex-name"><span>${ex.name}</span>
+  <button onclick="removeGymExercise(${ex.id})" class="btn btn-danger btn-sm" style="padding:3px 8px;font-size:0.72rem;">✕</button></div>
+  <div style="font-size:0.7rem;color:var(--text3);margin-bottom:7px;display:grid;grid-template-columns:28px 1fr 1fr 1fr 20px;gap:7px;text-align:center;">
+  <span>#</span><span>Reps</span><span>Peso kg</span><span>Iso (s)</span><span></span></div>
+  ${ex.sets.map((s,si)=>`<div class="set-row">
+  <div class="set-num">${si+1}</div>
+  <input type="number" class="form-control" style="padding:6px 8px;font-size:0.82rem;" placeholder="12" value="${s.reps}" onchange="updateSet(${ex.id},${si},'reps',this.value)">
+  <input type="number" class="form-control" style="padding:6px 8px;font-size:0.82rem;" placeholder="20" step="0.5" value="${s.weight}" onchange="updateSet(${ex.id},${si},'weight',this.value)">
+  <input type="number" class="form-control" style="padding:6px 8px;font-size:0.82rem;" placeholder="30" value="${s.time}" onchange="updateSet(${ex.id},${si},'time',this.value)">
+  <button onclick="removeSet(${ex.id},${si})" style="background:none;border:none;color:var(--text3);cursor:pointer;padding:0;font-size:0.82rem;">✕</button></div>`).join('')}
+  <button class="add-segment-btn" style="margin-top:4px;" onclick="addSet(${ex.id})">+ Añadir serie</button></div>`).join('');
+}
+
+// ============================================================
+// SAVE WORKOUT
+// ============================================================
+async function saveWorkout() {
+  if (!currentActivity) { toast('Selecciona un tipo de actividad'); return; }
+  const date = document.getElementById('f-date').value;
+  const time = document.getElementById('f-time').value;
+  let data = {};
+  if (currentActivity==='cycling') data={distance:document.getElementById('c-distance')?.value,duration:document.getElementById('c-duration')?.value,speedAvg:document.getElementById('c-speed-avg')?.value,speedMax:document.getElementById('c-speed-max')?.value,elevation:document.getElementById('c-elevation')?.value,power:document.getElementById('c-power')?.value,segments:JSON.parse(JSON.stringify(cyclingSegments))};
+  else if (currentActivity==='gym') { if(!gymExercises.length){toast('Añade al menos un ejercicio');return;} data={exercises:JSON.parse(JSON.stringify(gymExercises))}; }
+  else if (currentActivity==='running') data={type:document.getElementById('r-type')?.value,surface:document.getElementById('r-surface')?.value,distance:document.getElementById('r-distance')?.value,duration:document.getElementById('r-duration')?.value,pace:document.getElementById('r-pace')?.value,elevation:document.getElementById('r-elevation')?.value};
+  else if (currentActivity==='rowing') data={type:document.getElementById('row-type')?.value,distance:document.getElementById('row-distance')?.value,duration:document.getElementById('row-duration')?.value,pace:document.getElementById('row-pace')?.value,spm:document.getElementById('row-spm')?.value,power:document.getElementById('row-power')?.value};
+  else if (currentActivity==='hiking') data={route:document.getElementById('h-route')?.value,distance:document.getElementById('h-distance')?.value,duration:document.getElementById('h-duration')?.value,elevation:document.getElementById('h-elevation')?.value,altMax:document.getElementById('h-alt-max')?.value,difficulty:document.getElementById('h-difficulty')?.value};
+
+  const workout = {
+    id: Date.now(), activity: currentActivity,
+    date: date || new Date().toISOString().split('T')[0],
+    time: time || new Date().toTimeString().slice(0,5),
+    hrAvg: document.getElementById('f-hr-avg').value ? parseInt(document.getElementById('f-hr-avg').value) : null,
+    hrMax: document.getElementById('f-hr-max').value ? parseInt(document.getElementById('f-hr-max').value) : null,
+    observations: document.getElementById('f-observations').value,
+    data
+  };
+
+  await dbAdd(workout);
+  toast('✅ Entrenamiento guardado');
+  resetForm();
+  if (driveAutoSync && isDriveConnected()) {
+    toast('☁️ Sincronizando con Drive...');
+    setTimeout(drivePush, 800);
+  }
+  showView('dashboard');
+}
+
+function resetForm() {
+  currentActivity=null; gymExercises=[]; cyclingSegments=[];
+  document.querySelectorAll('.activity-opt').forEach(o=>o.classList.remove('selected'));
+  document.getElementById('activity-form-area').innerHTML='';
+  document.getElementById('common-fields').style.display='none';
+  ['f-date','f-time','f-hr-avg','f-hr-max','f-observations'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  const now=new Date();
+  document.getElementById('f-date').value=now.toISOString().split('T')[0];
+  document.getElementById('f-time').value=now.toTimeString().slice(0,5);
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+function getWeekRange(offset=0) {
+  const now=new Date(); const day=now.getDay()||7;
+  const monday=new Date(now); monday.setDate(now.getDate()-day+1+offset*7); monday.setHours(0,0,0,0);
+  const sunday=new Date(monday); sunday.setDate(monday.getDate()+6); sunday.setHours(23,59,59,999);
+  return {monday,sunday};
+}
+function changeWeek(delta) { if(delta===0) currentWeekOffset=0; else currentWeekOffset+=delta; refreshDashboard(); }
+
+async function refreshDashboard() {
+  const all = await dbAll();
+  const {monday,sunday} = getWeekRange(currentWeekOffset);
+  const weekW = all.filter(w=>{const d=new Date(w.date+'T00:00:00'); return d>=monday&&d<=sunday;});
+
+  const opts={day:'2-digit',month:'short'};
+  document.getElementById('week-range-label').textContent=monday.toLocaleDateString('es-ES',opts)+' – '+sunday.toLocaleDateString('es-ES',opts);
+
+  const todayStr=new Date().toISOString().split('T')[0];
+  const days=['L','M','X','J','V','S','D'];
+  let dots='';
+  for(let i=0;i<7;i++){
+    const d=new Date(monday); d.setDate(monday.getDate()+i);
+    const ds=d.toISOString().split('T')[0];
+    const count=weekW.filter(w=>w.date===ds).length;
+    const isToday=ds===todayStr;
+    dots+=`<div class="day-dot"><div class="dd-label">${days[i]}</div>
+    <div class="dd-circle ${count>0?'has-workout':''} ${isToday&&!count?'today':''}"
+    ${count>0?`onclick="filterByDay('${ds}')" style="cursor:pointer;" title="${count} sesión(es)"`:''}>
+    ${count>0?count:d.getDate()}</div></div>`;
+  }
+  document.getElementById('day-dots-row').innerHTML=dots;
+
+  document.getElementById('stat-week-sessions').textContent=weekW.length;
+  document.getElementById('stat-total-sessions').textContent=all.length;
+
+  let streak=0,checkDate=new Date(); checkDate.setHours(0,0,0,0);
+  while(true){const ds=checkDate.toISOString().split('T')[0]; if(all.some(w=>w.date===ds)){streak++;checkDate.setDate(checkDate.getDate()-1);}else break;}
+  document.getElementById('stat-week-streak').textContent=streak;
+
+  const actCount={};
+  all.forEach(w=>actCount[w.activity]=(actCount[w.activity]||0)+1);
+  const fav=Object.entries(actCount).sort((a,b)=>b[1]-a[1])[0];
+  document.getElementById('stat-fav-activity').textContent=fav?actEmojis[fav[0]]:'—';
+
+  const list=document.getElementById('recent-workouts-list');
+  const recent=all.slice(0,5);
+  list.innerHTML=recent.length?recent.map(w=>workoutCardHTML(w)).join(''):`<div class="empty-state"><div class="big">🏁</div><p>Sin entrenamientos aún.<br>¡Empieza a registrar hoy!</p></div>`;
+}
+
+function filterByDay(ds) { showView('history'); setTimeout(()=>{document.getElementById('search-input').value=ds; filterWorkouts();},100); }
+
+// ============================================================
+// HISTORY
+// ============================================================
+async function refreshHistory() { await filterWorkouts(); }
+async function filterWorkouts() {
+  const all=await dbAll();
+  const searchVal=document.getElementById('search-input').value.toLowerCase();
+  const today=new Date(); today.setHours(0,0,0,0);
+
+  let filtered=all.filter(w=>{
+    if(currentFilter!=='all'&&w.activity!==currentFilter) return false;
+    if(currentTimeFilter==='today') return w.date===today.toISOString().split('T')[0];
+    if(currentTimeFilter==='week'){const d=new Date(w.date+'T00:00:00');const{monday,sunday}=getWeekRange(0);return d>=monday&&d<=sunday;}
+    if(currentTimeFilter==='month'){const d=new Date(w.date+'T00:00:00');return d.getMonth()===today.getMonth()&&d.getFullYear()===today.getFullYear();}
+    return true;
+  });
+
+  if(searchVal) filtered=filtered.filter(w=>(w.date+' '+w.activity+' '+(w.observations||'')).toLowerCase().includes(searchVal)||JSON.stringify(w.data||{}).toLowerCase().includes(searchVal));
+
+  const list=document.getElementById('history-list');
+  if(!filtered.length){list.innerHTML=`<div class="empty-state"><div class="big">🔍</div><p>Sin resultados</p></div>`;return;}
+
+  const byDate={};
+  filtered.forEach(w=>{if(!byDate[w.date])byDate[w.date]=[];byDate[w.date].push(w);});
+  let html='';
+  Object.entries(byDate).sort((a,b)=>b[0].localeCompare(a[0])).forEach(([date,ws])=>{
+    const d=new Date(date+'T00:00:00');
+    html+=`<div style="font-size:0.74rem;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin:8px 0 6px;">${d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'})}</div>`;
+    html+=ws.map(w=>workoutCardHTML(w)).join('');
+  });
+  list.innerHTML=html;
+}
+function setFilter(val,el){currentFilter=val;document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');filterWorkouts();}
+function setTimeFilter(val,el){currentTimeFilter=val;document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');filterWorkouts();}
+
+// ============================================================
+// WORKOUT CARD HTML
+// ============================================================
+function workoutCardHTML(w) {
+  const d=w.data||{};
+  let metas='';
+  if(w.activity==='cycling'){if(d.distance)metas+=mc('📍',d.distance+' km');if(d.duration)metas+=mc('⏱',d.duration);if(d.speedAvg)metas+=mc('💨',d.speedAvg+' km/h');if(d.speedMax)metas+=mc('⚡',d.speedMax+' km/h máx');if(d.elevation)metas+=mc('⛰',d.elevation+'m');if(d.segments?.length)metas+=mc('📋',d.segments.length+' seg.');}
+  else if(w.activity==='gym'){if(d.exercises?.length){metas+=mc('💪',d.exercises.length+' ejercicios');const ts=d.exercises.reduce((a,e)=>a+e.sets.length,0);if(ts)metas+=mc('🔢',ts+' series');}}
+  else if(w.activity==='running'){if(d.distance)metas+=mc('📍',d.distance+' km');if(d.duration)metas+=mc('⏱',d.duration);if(d.pace)metas+=mc('⚡',d.pace+' /km');}
+  else if(w.activity==='rowing'){if(d.distance)metas+=mc('📍',d.distance+' m');if(d.duration)metas+=mc('⏱',d.duration);if(d.pace)metas+=mc('⚡',d.pace);}
+  else if(w.activity==='hiking'){if(d.route)metas+=mc('🗺',d.route);if(d.distance)metas+=mc('📍',d.distance+' km');if(d.elevation)metas+=mc('⛰','+'+d.elevation+'m');}
+  if(w.hrAvg)metas+=`<div class="meta-chip" style="color:var(--red);">❤️ <span>${w.hrAvg}/${w.hrMax||'?'} bpm</span></div>`;
+  return `<div class="workout-card" onclick="openModal(${w.id})">
+  <div class="wc-top"><div><div class="wc-date">${w.time||''}</div><div class="wc-title">${actEmojis[w.activity]} ${actLabels[w.activity]}</div></div>
+  <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;"><span class="badge badge-${w.activity}">${actLabels[w.activity]}</span>
+  <button onclick="event.stopPropagation();confirmDelete(${w.id})" class="btn btn-danger btn-sm" style="padding:3px 9px;font-size:0.7rem;">🗑 Borrar</button></div></div>
+  ${metas?`<div class="wc-meta">${metas}</div>`:''}
+  ${w.observations?`<div style="margin-top:7px;font-size:0.76rem;color:var(--text2);font-style:italic;">"${w.observations.slice(0,90)}${w.observations.length>90?'...':''}"</div>`:''}
+  </div>`;
+}
+function mc(icon,val){return `<div class="meta-chip">${icon} <span>${val}</span></div>`;}
+
+// ============================================================
+// MODAL
+// ============================================================
+async function openModal(id) {
+  const all=await dbAll(); const w=all.find(x=>x.id===id); if(!w) return;
+  const d=w.data||{};
+  const df=new Date(w.date+'T00:00:00').toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  let c=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+  <div><div style="font-size:0.75rem;color:var(--text2);">${df} · ${w.time||''}</div>
+  <div style="font-family:'Bebas Neue';font-size:1.5rem;">${actEmojis[w.activity]} ${actLabels[w.activity]}</div></div>
+  <span class="badge badge-${w.activity}" style="font-size:0.78rem;padding:4px 10px;">${actLabels[w.activity]}</span></div>`;
+
+  if(w.hrAvg||w.hrMax){c+=`<div class="card card-sm" style="border-left:3px solid var(--red);margin-bottom:10px;">
+  <div style="display:flex;gap:20px;"><div class="hr-display">❤️ <div class="hr-num">${w.hrAvg||'—'}</div><span style="color:var(--text3);">media</span></div>
+  ${w.hrMax?`<div class="hr-display">🔺 <div class="hr-num">${w.hrMax}</div><span style="color:var(--text3);">máx</span></div>`:''}</div></div>`;}
+
+  if(w.activity==='cycling'){
+    c+=`<div class="card card-sm" style="margin-bottom:10px;"><div class="section-title" style="font-size:0.95rem;margin-bottom:8px;"><div class="dot"></div>Datos</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;">${d.distance?mc('📍',d.distance+' km'):''}${d.duration?mc('⏱',d.duration):''}${d.speedAvg?mc('💨',d.speedAvg+' km/h media'):''}${d.speedMax?mc('⚡',d.speedMax+' km/h máx'):''}${d.elevation?mc('⛰','+'+d.elevation+'m'):''}${d.power?mc('🔋',d.power+' W'):''}</div></div>`;
+    if(d.segments?.length){c+=`<div class="card card-sm" style="margin-bottom:10px;"><div class="section-title" style="font-size:0.95rem;margin-bottom:8px;"><div class="dot"></div>Segmentos</div>`;
+    const zc={Z1:'#60a5fa',Z2:'#34d399',Z3:'#fbbf24',Z4:'#f97316',Z5:'#ef4444'};
+    c+=d.segments.map((s,i)=>`<div style="border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:6px;${s.zone?`border-left:3px solid ${zc[s.zone]}`:''}">
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;"><span style="font-size:0.68rem;color:var(--text3);font-weight:700;">SEG ${i+1}</span>
+    ${s.zone?`<span style="background:${zc[s.zone]}22;color:${zc[s.zone]};border-radius:999px;padding:1px 7px;font-size:0.7rem;font-weight:700;">${s.zone}</span>`:''}
+    ${s.type?`<span style="font-size:0.8rem;font-weight:600;">${s.type}</span>`:''}</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;">${s.duration?mc('⏱',s.duration):''}${s.notes?`<div style="font-size:0.76rem;color:var(--text2);width:100%;">📝 ${s.notes}</div>`:''}</div></div>`).join('');c+=`</div>`;}
+  }
+  if(w.activity==='gym'&&d.exercises?.length){
+    c+=`<div class="card card-sm" style="margin-bottom:10px;"><div class="section-title" style="font-size:0.95rem;margin-bottom:8px;"><div class="dot"></div>Ejercicios (${d.exercises.length})</div>`;
+    c+=d.exercises.map(ex=>{
+      const tv=ex.sets.reduce((a,s)=>a+(parseFloat(s.reps)||0)*(parseFloat(s.weight)||0),0);
+      return `<div class="exercise-block"><div class="ex-name"><span>${ex.name}</span>
+      <span style="font-size:0.72rem;color:var(--text3);font-weight:400;">${ex.sets.length} series${tv>0?' · '+tv.toFixed(0)+'kg':''}</span></div>
+      <div class="ex-sets">${ex.sets.map((s,si)=>`<div class="set-pill"><strong>#${si+1}</strong> ${s.reps?s.reps+' reps':''} ${s.weight?'× '+s.weight+'kg':''} ${s.time?s.time+'s iso':''}</div>`).join('')}</div></div>`;
+    }).join('');c+=`</div>`;}
+  if(w.activity==='running'){c+=`<div class="card card-sm" style="margin-bottom:10px;"><div style="display:flex;flex-wrap:wrap;gap:8px;">${d.type?mc('🏷',d.type):''}${d.distance?mc('📍',d.distance+' km'):''}${d.duration?mc('⏱',d.duration):''}${d.pace?mc('⚡',d.pace+' /km'):''}${d.surface?mc('🏔',d.surface):''}${d.elevation?mc('⛰','+'+d.elevation+'m'):''}</div></div>`;}
+  if(w.activity==='rowing'){c+=`<div class="card card-sm" style="margin-bottom:10px;"><div style="display:flex;flex-wrap:wrap;gap:8px;">${d.type?mc('🏷',d.type):''}${d.distance?mc('📍',d.distance+' m'):''}${d.duration?mc('⏱',d.duration):''}${d.pace?mc('⚡',d.pace):''}${d.spm?mc('🚣',d.spm+' spm'):''}${d.power?mc('⚡',d.power+' W'):''}</div></div>`;}
+  if(w.activity==='hiking'){c+=`<div class="card card-sm" style="margin-bottom:10px;"><div style="display:flex;flex-wrap:wrap;gap:8px;">${d.route?mc('🗺',d.route):''}${d.distance?mc('📍',d.distance+' km'):''}${d.duration?mc('⏱',d.duration):''}${d.elevation?mc('⛰','+'+d.elevation+'m'):''}${d.altMax?mc('🏔',d.altMax+'m alt.'):''}${d.difficulty?mc('⚠️',d.difficulty):''}</div></div>`;}
+  if(w.observations){c+=`<div class="card card-sm" style="border-left:3px solid var(--accent2);margin-bottom:10px;">
+  <div style="font-size:0.72rem;color:var(--accent2);font-weight:700;margin-bottom:5px;">📝 OBSERVACIONES</div>
+  <div style="font-size:0.85rem;color:var(--text2);line-height:1.6;">${w.observations}</div></div>`;}
+  c+=`<div style="display:flex;gap:10px;"><button class="btn btn-danger btn-sm" style="flex:1;" onclick="confirmDelete(${w.id});closeModalDirect()">🗑 Eliminar</button>
+  <button class="btn btn-secondary btn-sm" style="flex:1;" onclick="closeModalDirect()">Cerrar</button></div>`;
+
+  document.getElementById('modal-content').innerHTML=c;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal(e){if(e.target===document.getElementById('modal-overlay'))closeModalDirect();}
+function closeModalDirect(){document.getElementById('modal-overlay').classList.remove('open');}
+
+async function confirmDelete(id){
+  if(confirm('¿Eliminar este entrenamiento?')){
+    await dbDelete(id); toast('🗑 Entrenamiento eliminado');
+    refreshDashboard(); if(document.getElementById('view-history').classList.contains('active'))filterWorkouts();
+  }
+}
+
+// ============================================================
+// CHARTS
+// ============================================================
+function setChartPeriod(p,el){currentChartPeriod=p;document.querySelectorAll('.chart-period-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderCharts();}
+function setDistActivity(a,el){currentDistActivity=a;document.querySelectorAll('.chart-chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');renderDistChart();}
+
+function getChartColors() {
+  const isDark = document.documentElement.getAttribute('data-theme')==='dark';
+  return {
+    gridColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.07)',
+    textColor: isDark ? '#9090a8' : '#5a5a72',
+    tooltipBg: isDark ? '#1c1c22' : '#ffffff',
+    tooltipBorder: isDark ? '#2a2a35' : '#d8d8e0',
+    tooltipText: isDark ? '#f0f0f5' : '#0d0d0f',
+  };
+}
+
+function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
+
+function getDateCutoff() {
+  const now = new Date();
+  if(currentChartPeriod==='4w'){const d=new Date(now);d.setDate(d.getDate()-28);return d;}
+  if(currentChartPeriod==='3m'){const d=new Date(now);d.setMonth(d.getMonth()-3);return d;}
+  if(currentChartPeriod==='6m'){const d=new Date(now);d.setMonth(d.getMonth()-6);return d;}
+  return new Date('2000-01-01');
+}
+
+async function renderCharts() {
+  const all = await dbAll();
+  const cutoff = getDateCutoff();
+  const filtered = all.filter(w => new Date(w.date+'T00:00:00') >= cutoff);
+  const cc = getChartColors();
+  const baseOpts = {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { labels: { color: cc.textColor, font: { family:'DM Sans',size:11 }, boxWidth:12, padding:12 } },
+      tooltip: { backgroundColor:cc.tooltipBg, borderColor:cc.tooltipBorder, borderWidth:1, titleColor:cc.tooltipText, bodyColor:cc.textColor, cornerRadius:8, padding:10 }
+    },
+    scales: {
+      x: { grid:{color:cc.gridColor}, ticks:{color:cc.textColor,font:{family:'DM Sans',size:10}}, border:{color:cc.gridColor} },
+      y: { grid:{color:cc.gridColor}, ticks:{color:cc.textColor,font:{family:'DM Sans',size:10}}, border:{color:'transparent'} }
+    }
+  };
+
+  // 1. Sessions per week
+  renderSessionsChart(filtered, baseOpts, cc);
+  // 2. Pie chart
+  renderPieChart(filtered, cc);
+  // 3. Distance
+  renderDistChart();
+  // 4. HR trends
+  renderHRChart(filtered, baseOpts, cc);
+  // 5. Gym volume
+  renderGymChart(filtered, baseOpts, cc);
+  // 6. Exercise weight evolution — populate selector + render if exercise already chosen
+  await populateWeightExerciseSelector(all);
+  renderExerciseWeightChart();
+}
+
+function renderSessionsChart(filtered, baseOpts, cc) {
+  destroyChart('sessions');
+  // Group by ISO week
+  const weeks = {};
+  filtered.forEach(w => {
+    const d = new Date(w.date+'T00:00:00');
+    const weekKey = getWeekKey(d);
+    weeks[weekKey] = (weeks[weekKey]||0)+1;
+  });
+  const sortedKeys = Object.keys(weeks).sort();
+  const labels = sortedKeys.map(k=>{const p=k.split('-W');return `S${p[1]}/${p[0].slice(2)}`;});
+  const data = sortedKeys.map(k=>weeks[k]);
+  const total = data.reduce((a,b)=>a+b,0);
+  const avg = data.length ? (total/data.length).toFixed(1) : 0;
+  const max = data.length ? Math.max(...data) : 0;
+
+  document.getElementById('chart-sessions-summary').innerHTML = `
+    <div class="chart-summary-item"><div class="csnum">${total}</div><div class="cslabel">Total sesiones</div></div>
+    <div class="chart-summary-item"><div class="csnum">${avg}</div><div class="cslabel">Media/semana</div></div>
+    <div class="chart-summary-item"><div class="csnum">${max}</div><div class="cslabel">Mejor semana</div></div>`;
+
+  const ctx = document.getElementById('chart-sessions').getContext('2d');
+  charts['sessions'] = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [{ label:'Sesiones', data, backgroundColor:'rgba(255,107,53,0.7)', borderColor:'#ff6b35', borderWidth:2, borderRadius:6, borderSkipped:false }] },
+    options: { ...baseOpts, plugins: { ...baseOpts.plugins, legend:{display:false} } }
+  });
+}
+
+function renderPieChart(filtered, cc) {
+  destroyChart('pie');
+  const actCount = {};
+  filtered.forEach(w=>actCount[w.activity]=(actCount[w.activity]||0)+1);
+  if(!Object.keys(actCount).length){document.getElementById('chart-activity-pie').parentElement.innerHTML='<div class="empty-state" style="padding:30px"><div class="big">📊</div><p>Sin datos</p></div>';return;}
+  const labels = Object.keys(actCount).map(a=>actEmojis[a]+' '+actLabels[a]);
+  const data = Object.values(actCount);
+  const colors = Object.keys(actCount).map(a=>actColors[a]);
+  const ctx = document.getElementById('chart-activity-pie')?.getContext('2d');
+  if(!ctx) return;
+  charts['pie'] = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels, datasets:[{data, backgroundColor:colors.map(c=>c+'bb'), borderColor:colors, borderWidth:2}] },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins: { legend:{labels:{color:cc.textColor,font:{family:'DM Sans',size:11},padding:10,boxWidth:12}}, tooltip:{backgroundColor:cc.tooltipBg,borderColor:cc.tooltipBorder,borderWidth:1,titleColor:cc.tooltipText,bodyColor:cc.textColor,cornerRadius:8,padding:10} },
+      cutout:'60%'
+    }
+  });
+}
+
+async function renderDistChart() {
+  destroyChart('distance');
+  const all = await dbAll();
+  const cutoff = getDateCutoff();
+  const filtered = all.filter(w=>new Date(w.date+'T00:00:00')>=cutoff&&w.activity===currentDistActivity);
+  const cc = getChartColors();
+  const baseOpts = {
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{backgroundColor:cc.tooltipBg,borderColor:cc.tooltipBorder,borderWidth:1,titleColor:cc.tooltipText,bodyColor:cc.textColor,cornerRadius:8,padding:10}},
+    scales:{x:{grid:{color:cc.gridColor},ticks:{color:cc.textColor,font:{family:'DM Sans',size:10}},border:{color:cc.gridColor}},y:{grid:{color:cc.gridColor},ticks:{color:cc.textColor,font:{family:'DM Sans',size:10}},border:{color:'transparent'}}}
+  };
+  const sorted = [...filtered].sort((a,b)=>a.date.localeCompare(b.date));
+  const labels = sorted.map(w=>{ const d=new Date(w.date+'T00:00:00'); return d.toLocaleDateString('es-ES',{day:'2-digit',month:'short'}); });
+  const data = sorted.map(w=>{
+    const dist = w.activity==='rowing' ? (parseFloat(w.data?.distance)||0)/1000 : (parseFloat(w.data?.distance)||0);
+    return dist;
+  });
+  const total=data.reduce((a,b)=>a+b,0).toFixed(1);
+  const avg=data.length?(total/data.length).toFixed(1):0;
+  const max=data.length?Math.max(...data).toFixed(1):0;
+  const unit = currentDistActivity==='rowing'?'km (×1000m)':'km';
+
+  document.getElementById('chart-distance-summary').innerHTML=`
+    <div class="chart-summary-item"><div class="csnum">${total}</div><div class="cslabel">Total ${unit}</div></div>
+    <div class="chart-summary-item"><div class="csnum">${avg}</div><div class="cslabel">Media/sesión ${unit}</div></div>
+    <div class="chart-summary-item"><div class="csnum">${max}</div><div class="cslabel">Máximo ${unit}</div></div>`;
+
+  const color = actColors[currentDistActivity];
+  const ctx = document.getElementById('chart-distance')?.getContext('2d');
+  if(!ctx) return;
+  charts['distance'] = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets:[{label:'Distancia', data, borderColor:color, backgroundColor:color+'22', fill:true, tension:0.35, pointBackgroundColor:color, pointRadius:4, pointHoverRadius:6}] },
+    options: baseOpts
+  });
+}
+
+function renderHRChart(filtered, baseOpts, cc) {
+  destroyChart('hr');
+  const withHR = filtered.filter(w=>w.hrAvg).sort((a,b)=>a.date.localeCompare(b.date));
+  if(!withHR.length){document.getElementById('chart-hr-summary').innerHTML='<div style="color:var(--text3);font-size:0.82rem;padding:8px 0;">Sin datos de pulsaciones aún.</div>';return;}
+  const labels = withHR.map(w=>{const d=new Date(w.date+'T00:00:00');return d.toLocaleDateString('es-ES',{day:'2-digit',month:'short'});});
+  const avgData = withHR.map(w=>w.hrAvg);
+  const maxData = withHR.map(w=>w.hrMax).filter(v=>v);
+  const avgHR = (avgData.reduce((a,b)=>a+b,0)/avgData.length).toFixed(0);
+  const maxHR = maxData.length?Math.max(...maxData):'-';
+  const minHR = Math.min(...avgData);
+
+  document.getElementById('chart-hr-summary').innerHTML=`
+    <div class="chart-summary-item"><div class="csnum" style="color:var(--red);">${avgHR}</div><div class="cslabel">FC media bpm</div></div>
+    <div class="chart-summary-item"><div class="csnum" style="color:var(--red);">${maxHR}</div><div class="cslabel">FC máx registrada</div></div>
+    <div class="chart-summary-item"><div class="csnum" style="color:var(--green);">${minHR}</div><div class="cslabel">FC más baja</div></div>`;
+
+  const ctx = document.getElementById('chart-hr')?.getContext('2d');
+  if(!ctx) return;
+  charts['hr'] = new Chart(ctx, {
+    type:'line',
+    data:{ labels, datasets:[
+      {label:'FC Media',data:avgData,borderColor:'#ef4444',backgroundColor:'#ef444422',fill:true,tension:0.35,pointBackgroundColor:'#ef4444',pointRadius:4,pointHoverRadius:6},
+      {label:'FC Máxima',data:withHR.map(w=>w.hrMax||null),borderColor:'#fb923c',backgroundColor:'transparent',tension:0.35,pointBackgroundColor:'#fb923c',pointRadius:3,borderDash:[4,3]}
+    ]},
+    options: baseOpts
+  });
+}
+
+function renderGymChart(filtered, baseOpts, cc) {
+  destroyChart('gym');
+  const gymSessions = filtered.filter(w=>w.activity==='gym'&&w.data?.exercises?.length).sort((a,b)=>a.date.localeCompare(b.date));
+  if(!gymSessions.length){document.getElementById('chart-gym-summary').innerHTML='<div style="color:var(--text3);font-size:0.82rem;padding:8px 0;">Sin sesiones de gimnasio aún.</div>';return;}
+  const labels = gymSessions.map(w=>{const d=new Date(w.date+'T00:00:00');return d.toLocaleDateString('es-ES',{day:'2-digit',month:'short'});});
+  const data = gymSessions.map(w=>w.data.exercises.reduce((total,ex)=>total+ex.sets.reduce((s,set)=>s+(parseFloat(set.reps)||0)*(parseFloat(set.weight)||0),0),0));
+  const totalVol = data.reduce((a,b)=>a+b,0).toFixed(0);
+  const avgVol = data.length?(data.reduce((a,b)=>a+b,0)/data.length).toFixed(0):0;
+  const maxVol = data.length?Math.max(...data).toFixed(0):0;
+
+  document.getElementById('chart-gym-summary').innerHTML=`
+    <div class="chart-summary-item"><div class="csnum">${totalVol}</div><div class="cslabel">Total kg</div></div>
+    <div class="chart-summary-item"><div class="csnum">${avgVol}</div><div class="cslabel">Media/sesión kg</div></div>
+    <div class="chart-summary-item"><div class="csnum">${maxVol}</div><div class="cslabel">Mejor sesión kg</div></div>`;
+
+  const ctx = document.getElementById('chart-gym')?.getContext('2d');
+  if(!ctx) return;
+  charts['gym'] = new Chart(ctx, {
+    type:'bar',
+    data:{labels,datasets:[{label:'Volumen (kg)',data,backgroundColor:'rgba(168,85,247,0.7)',borderColor:'#a855f7',borderWidth:2,borderRadius:6,borderSkipped:false}]},
+    options:{...baseOpts,plugins:{...baseOpts.plugins,legend:{display:false}}}
+  });
+}
+
+function getWeekKey(date) {
+  const d = new Date(date); d.setHours(0,0,0,0);
+  d.setDate(d.getDate()+4-(d.getDay()||7));
+  const yearStart = new Date(d.getFullYear(),0,1);
+  const week = Math.ceil(((d-yearStart)/86400000+1)/7);
+  return `${d.getFullYear()}-W${String(week).padStart(2,'0')}`;
+}
+
+// ============================================================
+// EXERCISE WEIGHT EVOLUTION
+// ============================================================
+async function populateWeightExerciseSelector(allWorkouts) {
+  // Collect all unique exercises that have at least one set with weight > 0
+  const exerciseSet = new Set();
+  allWorkouts.forEach(w => {
+    if (w.activity !== 'gym' || !w.data?.exercises) return;
+    w.data.exercises.forEach(ex => {
+      const hasWeight = ex.sets.some(s => parseFloat(s.weight) > 0);
+      if (hasWeight) exerciseSet.add(ex.name);
+    });
+  });
+
+  const sel = document.getElementById('weight-exercise-select');
+  if (!sel) return;
+  const sorted = [...exerciseSet].sort((a,b) => a.localeCompare(b, 'es'));
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">Selecciona un ejercicio...</option>';
+  sorted.forEach(name => {
+    const o = document.createElement('option');
+    o.value = name; o.textContent = name;
+    if (name === prev || name === currentWeightExercise) o.selected = true;
+    sel.appendChild(o);
+  });
+  // Restore selection if still available
+  if (currentWeightExercise && sorted.includes(currentWeightExercise)) {
+    sel.value = currentWeightExercise;
+  }
+}
+
+function onWeightExerciseChange() {
+  const sel = document.getElementById('weight-exercise-select');
+  currentWeightExercise = sel ? sel.value : '';
+  renderExerciseWeightChart();
+}
+
+async function renderExerciseWeightChart() {
+  destroyChart('exerciseWeight');
+  const container = document.getElementById('weight-chart-container');
+  const emptyMsg  = document.getElementById('weight-chart-empty');
+  const summary   = document.getElementById('chart-exercise-weight-summary');
+
+  if (!currentWeightExercise) {
+    if (container) container.style.display = 'none';
+    if (emptyMsg)  emptyMsg.style.display   = 'block';
+    if (summary)   summary.innerHTML = '';
+    return;
+  }
+  if (container) container.style.display = 'block';
+  if (emptyMsg)  emptyMsg.style.display   = 'none';
+
+  const all     = await dbAll();
+  const cutoff  = getDateCutoff();
+  const cc      = getChartColors();
+
+  // Gather one data point per session: date + max weight used for this exercise
+  const points = [];
+  all
+    .filter(w => w.activity === 'gym' && new Date(w.date+'T00:00:00') >= cutoff && w.data?.exercises)
+    .sort((a,b) => a.date.localeCompare(b.date))
+    .forEach(w => {
+      const ex = w.data.exercises.find(e => e.name === currentWeightExercise);
+      if (!ex) return;
+      const weights = ex.sets.map(s => parseFloat(s.weight)||0).filter(v => v > 0);
+      if (!weights.length) return;
+      const maxW  = Math.max(...weights);
+      const avgW  = (weights.reduce((a,b)=>a+b,0) / weights.length);
+      const totalSets = ex.sets.length;
+      const totalReps = ex.sets.reduce((a,s)=>a+(parseFloat(s.reps)||0),0);
+      points.push({ date: w.date, maxW, avgW, totalSets, totalReps });
+    });
+
+  if (!points.length) {
+    if (container) container.style.display = 'none';
+    if (emptyMsg)  { emptyMsg.style.display = 'block'; emptyMsg.querySelector('p').textContent = `Sin sesiones con "${currentWeightExercise}" en el período seleccionado`; }
+    if (summary)   summary.innerHTML = '';
+    return;
+  }
+  if (container) container.style.display = 'block';
+  if (emptyMsg)  emptyMsg.style.display = 'none';
+
+  const labels   = points.map(p => new Date(p.date+'T00:00:00').toLocaleDateString('es-ES',{day:'2-digit',month:'short'}));
+  const maxData  = points.map(p => p.maxW);
+  const avgData  = points.map(p => parseFloat(p.avgW.toFixed(1)));
+
+  // Summary stats
+  const allMaxW  = Math.max(...maxData);
+  const allAvgW  = (maxData.reduce((a,b)=>a+b,0)/maxData.length).toFixed(1);
+  const firstW   = maxData[0];
+  const lastW    = maxData[maxData.length-1];
+  const progress = lastW > firstW ? `+${(lastW-firstW).toFixed(1)}` : (lastW-firstW).toFixed(1);
+  const progressColor = lastW >= firstW ? 'var(--green)' : 'var(--red)';
+
+  if (summary) summary.innerHTML = `
+    <div class="chart-summary-item"><div class="csnum" style="color:var(--accent);">${allMaxW}</div><div class="cslabel">Máximo histórico kg</div></div>
+    <div class="chart-summary-item"><div class="csnum">${allAvgW}</div><div class="cslabel">Media máx/sesión kg</div></div>
+    <div class="chart-summary-item"><div class="csnum" style="color:${progressColor};">${progress}</div><div class="cslabel">Progreso período kg</div></div>
+    <div class="chart-summary-item"><div class="csnum">${points.length}</div><div class="cslabel">Sesiones registradas</div></div>`;
+
+  const ctx = document.getElementById('chart-exercise-weight')?.getContext('2d');
+  if (!ctx) return;
+
+  const baseOpts = {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { labels: { color:cc.textColor, font:{family:'DM Sans',size:11}, boxWidth:12, padding:12 } },
+      tooltip: { backgroundColor:cc.tooltipBg, borderColor:cc.tooltipBorder, borderWidth:1, titleColor:cc.tooltipText, bodyColor:cc.textColor, cornerRadius:8, padding:10,
+        callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y} kg` }
+      }
+    },
+    scales: {
+      x: { grid:{color:cc.gridColor}, ticks:{color:cc.textColor,font:{family:'DM Sans',size:10}}, border:{color:cc.gridColor} },
+      y: { grid:{color:cc.gridColor}, ticks:{color:cc.textColor,font:{family:'DM Sans',size:10},callback:v=>v+' kg'}, border:{color:'transparent'} }
+    }
+  };
+
+  charts['exerciseWeight'] = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label:'Peso máximo', data:maxData, borderColor:'#a855f7', backgroundColor:'rgba(168,85,247,0.15)', fill:true, tension:0.35, pointBackgroundColor:'#a855f7', pointRadius:5, pointHoverRadius:7, borderWidth:2.5 },
+        { label:'Peso medio sesión', data:avgData, borderColor:'#6366f1', backgroundColor:'transparent', tension:0.35, pointBackgroundColor:'#6366f1', pointRadius:3, pointHoverRadius:5, borderWidth:1.5, borderDash:[5,3] }
+      ]
+    },
+    options: baseOpts
+  });
+}
+
+// ============================================================
+// SETTINGS
+// ============================================================
+async function refreshSettings() {
+  const all = await dbAll();
+  const actCount={};
+  all.forEach(w=>actCount[w.activity]=(actCount[w.activity]||0)+1);
+  document.getElementById('global-stats-area').innerHTML=Object.keys(actCount).length?
+    Object.entries(actCount).map(([act,count])=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);"><span style="font-size:0.85rem;">${actEmojis[act]} ${actLabels[act]}</span><span style="font-family:'Bebas Neue';font-size:1rem;color:var(--accent);">${count}</span></div>`).join(''):
+    '<div style="color:var(--text3);font-size:0.82rem;">Sin datos aún</div>';
+
+  // Drive toggle state
+  const autoSync = localStorage.getItem('fittrack-autosync')==='true';
+  const toggle=document.getElementById('auto-sync-toggle');
+  if(toggle){toggle.checked=autoSync; updateToggleUI(autoSync);}
+  driveAutoSync=autoSync;
+  updateThemeButtons();
+}
+
+async function exportData() {
+  const all=await dbAll();
+  const blob=new Blob([JSON.stringify({version:2,exported:new Date().toISOString(),workouts:all},null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`fittrack_backup_${new Date().toISOString().split('T')[0]}.json`;
+  a.click(); URL.revokeObjectURL(a.href); toast('📤 Datos exportados');
+}
+function importData(event) {
+  const file=event.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=async e=>{
+    try{const data=JSON.parse(e.target.result);
+    if(!data.workouts)throw new Error('Formato inválido');
+    if(confirm(`¿Importar ${data.workouts.length} entrenamientos?`)){await dbBulkAdd(data.workouts);toast(`✅ ${data.workouts.length} entrenamientos importados`);refreshSettings();}
+    }catch(err){toast('❌ '+err.message);}
+  };
+  reader.readAsText(file); event.target.value='';
+}
+async function clearAllData(){if(confirm('⚠️ ¿Borrar TODOS los datos?')){await dbClear();toast('🗑 Datos eliminados');refreshDashboard();refreshSettings();}}
+
+// ============================================================
+// GOOGLE DRIVE INTEGRATION
+// ============================================================
+// Architecture: OAuth2 Implicit Flow (token-based, no server needed)
+// Storage: Single JSON file in user's Drive (appDataFolder or root)
+// Flow: 1) Load gapi 2) Authorize 3) Find/create JSON file 4) Read/Write
+
+let gapiLoaded=false, driveToken=null, driveFileId=null;
+let driveClientId='', driveFileName='fittrack_data.json';
+
+function isDriveConnected(){return !!driveToken;}
+
+function driveLog(msg, type='info'){
+  const log=document.getElementById('drive-log');
+  if(!log) return;
+  const time=new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const entry=document.createElement('div');
+  entry.className=`drive-log-entry ${type}`;
+  entry.textContent=`[${time}] ${msg}`;
+  log.appendChild(entry);
+  log.scrollTop=log.scrollHeight;
+}
+
+function updateDriveUI(state){
+  // state: 'disconnected' | 'connected' | 'syncing' | 'error'
+  const dot=document.getElementById('drive-dot');
+  const bigDot=document.getElementById('drive-big-dot');
+  const label=document.getElementById('drive-status-label');
+  const mainStatus=document.getElementById('drive-main-status');
+  const mainSub=document.getElementById('drive-main-sub');
+  const connectBtn=document.getElementById('drive-connect-btn');
+  const pushBtn=document.getElementById('drive-push-btn');
+  const pullBtn=document.getElementById('drive-pull-btn');
+  const states={
+    disconnected:{dotCls:'',labelTxt:'Drive',statusTxt:'No conectado',subTxt:'Configura tu Client ID para empezar',bigColor:'var(--text3)',btnTxt:'Conectar',btnsEnabled:false},
+    connected:{dotCls:'connected',labelTxt:'Conectado',statusTxt:'Google Drive activo',subTxt:'Sincronización lista',bigColor:'var(--green)',btnTxt:'Desconectar',btnsEnabled:true},
+    syncing:{dotCls:'syncing',labelTxt:'Sync...',statusTxt:'Sincronizando...',subTxt:'Transfiriendo datos',bigColor:'var(--yellow)',btnTxt:'Desconectar',btnsEnabled:false},
+    error:{dotCls:'',labelTxt:'Error',statusTxt:'Error de conexión',subTxt:'Revisa tu Client ID y vuelve a intentarlo',bigColor:'var(--red)',btnTxt:'Reconectar',btnsEnabled:false},
+    config:{dotCls:'',labelTxt:'Drive',statusTxt:'Sin configurar',subTxt:'Añade tu Google OAuth Client ID',bigColor:'var(--text3)',btnTxt:'Configurar',btnsEnabled:false},
+  };
+  const s=states[state]||states.disconnected;
+  if(dot){dot.className='drive-dot '+s.dotCls;}
+  if(bigDot){bigDot.style.background=s.bigColor;}
+  if(label) label.textContent=s.labelTxt;
+  if(mainStatus) mainStatus.textContent=s.statusTxt;
+  if(mainSub) mainSub.textContent=s.subTxt;
+  if(pushBtn){pushBtn.disabled=!s.btnsEnabled;}
+  if(pullBtn){pullBtn.disabled=!s.btnsEnabled;}
+  if(connectBtn){connectBtn.textContent=state==='connected'||state==='syncing'?'Desconectar':'Conectar';}
+}
+
+function openDriveConfig(){
+  document.getElementById('drive-client-id-input').value=localStorage.getItem('fittrack-drive-clientid')||'';
+  document.getElementById('drive-filename-input').value=localStorage.getItem('fittrack-drive-filename')||'fittrack_data.json';
+  document.getElementById('drive-config-modal').classList.add('open');
+}
+function closeDriveConfig(){document.getElementById('drive-config-modal').classList.remove('open');}
+function saveDriveConfig(){
+  const clientId=document.getElementById('drive-client-id-input').value.trim();
+  const filename=document.getElementById('drive-filename-input').value.trim()||'fittrack_data.json';
+  if(!clientId){toast('Introduce un Client ID válido');return;}
+  localStorage.setItem('fittrack-drive-clientid',clientId);
+  localStorage.setItem('fittrack-drive-filename',filename);
+  driveClientId=clientId; driveFileName=filename;
+  closeDriveConfig();
+  toast('✅ Configuración guardada');
+  driveLog('Client ID configurado. Pulsa Conectar para autorizar.','info');
+  updateDriveUI('disconnected');
+  driveConnect();
+}
+
+function loadGapi(){
+  return new Promise((res,rej)=>{
+    if(gapiLoaded){res();return;}
+    const s=document.createElement('script');
+    s.src='https://accounts.google.com/gsi/client';
+    s.onload=()=>{gapiLoaded=true;res();};
+    s.onerror=()=>rej(new Error('No se pudo cargar Google API. Verifica tu conexión.'));
+    document.head.appendChild(s);
+  });
+}
+
+async function driveConnect(){
+  if(isDriveConnected()){driveDisconnect();return;}
+  driveClientId=localStorage.getItem('fittrack-drive-clientid')||'';
+  driveFileName=localStorage.getItem('fittrack-drive-filename')||'fittrack_data.json';
+  if(!driveClientId){openDriveConfig();return;}
+
+  driveLog('Iniciando autorización con Google...','info');
+  updateDriveUI('syncing');
+  try{
+    await loadGapi();
+    // Use token model (implicit grant) for SPA without backend
+    const tokenClient=google.accounts.oauth2.initTokenClient({
+      client_id:driveClientId,
+      scope:'https://www.googleapis.com/auth/drive.file',
+      callback:(response)=>{
+        if(response.error){driveLog('Error OAuth: '+response.error,'err');updateDriveUI('error');toast('❌ Error de autorización: '+response.error);return;}
+        driveToken=response.access_token;
+        driveLog('✓ Autorización correcta. Drive conectado.','ok');
+        updateDriveUI('connected');
+        toast('✅ Google Drive conectado');
+      }
+    });
+    tokenClient.requestAccessToken({prompt:'select_account'});
+  }catch(err){
+    driveLog('Error: '+err.message,'err');
+    updateDriveUI('error');
+    toast('❌ '+err.message);
+  }
+}
+
+function driveDisconnect(){
+  if(window.google?.accounts?.oauth2&&driveToken){google.accounts.oauth2.revoke(driveToken,()=>{});}
+  driveToken=null; driveFileId=null;
+  driveLog('Sesión de Drive cerrada.','info');
+  updateDriveUI('disconnected');
+  toast('Drive desconectado');
+}
+
+async function driveRequest(method, url, body, extraHeaders){
+  const response=await fetch(url,{method,headers:{'Authorization':'Bearer '+driveToken,'Content-Type':'application/json',...(extraHeaders||{})},...(body?{body:JSON.stringify(body)}:{})});
+  if(!response.ok){const err=await response.text();throw new Error(`HTTP ${response.status}: ${err}`);}
+  return response.json();
+}
+
+async function findOrCreateDriveFile(){
+  if(driveFileId) return driveFileId;
+  // Search for existing file
+  const search=await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${driveFileName}' and trashed=false&fields=files(id,name)`,{headers:{'Authorization':'Bearer '+driveToken}});
+  const data=await search.json();
+  if(data.files&&data.files.length>0){driveFileId=data.files[0].id;driveLog(`Archivo encontrado: ${driveFileName} (${driveFileId.slice(0,8)}...)','ok`);return driveFileId;}
+  // Create new file
+  const meta={name:driveFileName,mimeType:'application/json'};
+  const created=await driveRequest('POST','https://www.googleapis.com/drive/v3/files?fields=id',meta);
+  driveFileId=created.id;
+  driveLog(`Archivo creado en Drive: ${driveFileName}`,'ok');
+  return driveFileId;
+}
+
+async function drivePush(){
+  if(!isDriveConnected()){toast('Conecta Google Drive primero');return;}
+  updateDriveUI('syncing');
+  driveLog('Subiendo datos a Drive...','info');
+  try{
+    const all=await dbAll();
+    const jsonData=JSON.stringify({version:2,syncedAt:new Date().toISOString(),device:navigator.userAgent.includes('Android')?'Android':'Windows/Desktop',workouts:all},null,2);
+    const fileId=await findOrCreateDriveFile();
+    // Multipart upload to update file content
+    const boundary='fittrack_boundary_'+Date.now();
+    const body=`--${boundary}\r\nContent-Type: application/json\r\n\r\n{}\r\n--${boundary}\r\nContent-Type: application/json\r\n\r\n${jsonData}\r\n--${boundary}--`;
+    const resp=await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`,{method:'PATCH',headers:{'Authorization':'Bearer '+driveToken,'Content-Type':`multipart/related; boundary="${boundary}"`},body});
+    if(!resp.ok)throw new Error('Error al subir: '+resp.status);
+    driveLog(`✓ ${all.length} entrenamientos subidos a Drive`,'ok');
+    updateDriveUI('connected');
+    toast(`☁️ Datos sincronizados (${all.length} entrenamientos)`);
+  }catch(err){
+    driveLog('Error subiendo: '+err.message,'err');
+    updateDriveUI('error');
+    toast('❌ Error al subir: '+err.message);
+  }
+}
+
+async function drivePull(){
+  if(!isDriveConnected()){toast('Conecta Google Drive primero');return;}
+  updateDriveUI('syncing');
+  driveLog('Descargando datos de Drive...','info');
+  try{
+    const fileId=await findOrCreateDriveFile();
+    const resp=await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,{headers:{'Authorization':'Bearer '+driveToken}});
+    if(!resp.ok)throw new Error('No se pudo leer el archivo: '+resp.status);
+    const text=await resp.text();
+    if(!text||text.trim()===''){driveLog('El archivo Drive está vacío. Sube datos primero.','info');updateDriveUI('connected');return;}
+    const data=JSON.parse(text);
+    if(!data.workouts)throw new Error('Formato de archivo inválido');
+    const current=await dbAll();
+    const currentIds=new Set(current.map(w=>w.id));
+    const newOnes=data.workouts.filter(w=>!currentIds.has(w.id));
+    if(newOnes.length>0){
+      await dbBulkAdd(newOnes);
+      driveLog(`✓ ${newOnes.length} nuevos entrenamientos importados desde Drive`,'ok');
+      toast(`📥 ${newOnes.length} entrenamientos descargados`);
+    }else{driveLog('Sin entrenamientos nuevos. Datos ya sincronizados.','ok');toast('✅ Ya estás al día');}
+    driveLog(`Sincronizado desde: ${data.device||'desconocido'} (${data.syncedAt?.slice(0,16)||'-'})`,'info');
+    updateDriveUI('connected');
+    refreshDashboard();
+  }catch(err){
+    driveLog('Error descargando: '+err.message,'err');
+    updateDriveUI('error');
+    toast('❌ Error al descargar: '+err.message);
+  }
+}
+
+function toggleAutoSync(val){
+  driveAutoSync=val;
+  localStorage.setItem('fittrack-autosync',val?'true':'false');
+  updateToggleUI(val);
+  driveLog(val?'Sincronización automática activada':'Sincronización automática desactivada','info');
+}
+function updateToggleUI(val){
+  const track=document.getElementById('toggle-track');
+  const thumb=document.getElementById('toggle-thumb');
+  if(track) track.style.background=val?'var(--accent)':'var(--bg4)';
+  if(thumb){thumb.style.background=val?'white':'var(--text3)';thumb.style.left=val?'23px':'3px';}
+}
+
+// ============================================================
+// PWA
+// ============================================================
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;const btn=document.getElementById('install-btn');if(btn)btn.style.display='inline-flex';});
+function installPWA(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt.userChoice.then(r=>{if(r.outcome==='accepted')toast('✅ App instalada');deferredPrompt=null;});}}
+
+// ============================================================
+// TOAST
+// ============================================================
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),2800);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('DOMContentLoaded',async()=>{
+  await initDB();
+  const now=new Date();
+  document.getElementById('f-date').value=now.toISOString().split('T')[0];
+  document.getElementById('f-time').value=now.toTimeString().slice(0,5);
+  document.getElementById('today-chip').textContent=now.toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short'});
+
+  // Load saved theme
+  const savedTheme=localStorage.getItem('fittrack-theme')||'dark';
+  setTheme(savedTheme);
+
+  // Load Drive config state
+  driveClientId=localStorage.getItem('fittrack-drive-clientid')||'';
+  driveFileName=localStorage.getItem('fittrack-drive-filename')||'fittrack_data.json';
+  driveAutoSync=localStorage.getItem('fittrack-autosync')==='true';
+  if(!driveClientId) updateDriveUI('config');
+  else updateDriveUI('disconnected');
+
+  // Auto-sync toggle UI
+  const toggle=document.getElementById('auto-sync-toggle');
+  if(toggle){toggle.checked=driveAutoSync;updateToggleUI(driveAutoSync);}
+
+  await refreshDashboard();
+});
+</script>
+
+<script>
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{});}
+</script>
+</body>
+</html>
